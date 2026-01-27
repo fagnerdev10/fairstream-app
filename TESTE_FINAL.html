@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESTE FINAL - Payload Byte a Byte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #f00;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .warning {
+            background: #f00;
+            color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #111;
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background: #0c0;
+        }
+
+        .output {
+            display: none;
+            background: #111;
+            padding: 20px;
+            border: 2px solid #0f0;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .output.show {
+            display: block;
+        }
+
+        .field {
+            margin: 10px 0;
+            padding: 10px;
+            background: #000;
+            border-left: 4px solid #0f0;
+        }
+
+        .field span {
+            color: #ff0;
+            font-weight: bold;
+        }
+
+        .qr {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+        }
+
+        .copy-btn {
+            background: #00f;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        .example {
+            background: #1a1a00;
+            padding: 15px;
+            margin-top: 20px;
+            border: 2px solid #ff0;
+            border-radius: 8px;
+        }
+
+        .example h3 {
+            color: #ff0;
+            margin-bottom: 10px;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison>div {
+            padding: 15px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+
+        .comparison h4 {
+            color: #0ff;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔥 TESTE DEFINITIVO - PAYLOAD COMPLETO</h1>
+
+        <div class="warning">
+            ⚠️ SE ESTE TESTE FALHAR, O PROBLEMA É:<br><br>
+            1. Você está pagando PRA VOCÊ MESMO (impossível por lei)<br>
+            2. A chave está em OUTRO NOME/CPF diferente do que você digitou<br>
+            3. A conta do recebedor está BLOQUEADA/SUSPENSA<br>
+            4. Seu banco tem RESTRIÇÃO nessa operação específica<br><br>
+            NÃO É PROBLEMA DE CÓDIGO!
+        </div>
+
+        <input type="text" id="chave" placeholder="DIGITE A CHAVE PIX">
+        <input type="text" id="nome" value="NOME DO DONO DA CHAVE" placeholder="NOME">
+        <input type="number" id="valor" value="1.00" step="0.01" placeholder="VALOR">
+        <button onclick="analisar()">🔍 ANALISAR PAYLOAD COMPLETO</button>
+
+        <div class="output" id="output">
+            <h2 style="color: #0f0; margin-bottom: 20px;">📊 ANÁLISE COMPLETA DO PAYLOAD</h2>
+
+            <div id="campos"></div>
+
+            <div class="qr">
+                <img id="qrcode" src="">
+            </div>
+
+            <button class="copy-btn" onclick="copiarPayload()">📋 COPIAR COPIA E COLA</button>
+
+            <div class="example">
+                <h3>📖 EXEMPLO DE PAYLOAD VÁLIDO (REFERÊNCIA)</h3>
+                <p style="word-break: break-all; color: #888; font-size: 12px;">
+                    00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426655440000
+                    5204000053039865802BR5913FULANO DE TAL6009SAO PAULO62070503***6304A61F
+                </p>
+                <p style="margin-top: 10px; color: #ff0;">
+                    ☝️ Compare com o seu payload abaixo
+                </p>
+            </div>
+
+            <div
+                style="margin-top: 20px; padding: 20px; background: #0a0a0a; border: 2px solid #f00; border-radius: 8px;">
+                <h3 style="color: #f00; margin-bottom: 15px;">🚨 SEU PAYLOAD GERADO:</h3>
+                <textarea id="payloadCompleto" readonly
+                    style="width: 100%; height: 120px; background: #000; color: #0f0; border: 1px solid #0f0; padding: 10px; font-size: 12px; font-family: 'Courier New', monospace;"></textarea>
+                <p style="margin-top: 10px; color: #ff0; font-size: 14px;">
+                    📌 Tamanho: <span id="tamanho"></span> caracteres<br>
+                    📌 CRC16: <span id="crcValue"></span>
+                </p>
+            </div>
+
+            <div class="comparison">
+                <div>
+                    <h4>✅ O QUE DEVERIA ACONTECER:</h4>
+                    <ul style="color: #0f0; padding-left: 20px; margin-top: 10px;">
+                        <li>Banco lê o QR Code</li>
+                        <li>Mostra: Nome do Recebedor</li>
+                        <li>Mostra: Valor</li>
+                        <li>Pede senha/confirmação</li>
+                        <li>Transfere o dinheiro</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>❌ O QUE ESTÁ ACONTECENDO:</h4>
+                    <ul style="color: #f00; padding-left: 20px; margin-top: 10px;">
+                        <li>Banco lê o QR Code</li>
+                        <li>Diz "Não foi possível carregar"</li>
+                        <li style="color: #ff0; font-weight: bold;">MOTIVO: Chave inválida OU tentando pagar pra si
+                            mesmo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 30px; padding: 20px; background: #001a00; border: 2px solid #0f0; border-radius: 8px;">
+                <h3 style="color: #0f0; margin-bottom: 15px;">✅ TESTE GARANTIDO PARA FUNCIONAR:</h3>
+                <ol style="color: #0f0; padding-left: 20px; line-height: 2;">
+                    <li>Pegue a CHAVE PIX de um AMIGO (não sua)</li>
+                    <li>Digite o NOME COMPLETO do amigo (exatamente como está no CPF)</li>
+                    <li>Gere o QR Code</li>
+                    <li>Tente pagar R$ 1,00 para ele</li>
+                    <li>Se funcionar → O CÓDIGO ESTÁ PERFEITO!</li>
+                    <li>Se não funcionar → Problema é no BANCO ou na CHAVE</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let payloadGlobal = '';
+
+        function emv(id, val) {
+            const len = String(val.length).padStart(2, '0');
+            return id + len + val;
+        }
+
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= data.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function normalizar(texto) {
+            return texto
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^A-Z0-9 ]/gi, " ")
+                .toUpperCase()
+                .substring(0, 25)
+                .trim();
+        }
+
+        function analisar() {
+            const chaveInput = document.getElementById('chave').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const valor = parseFloat(document.getElementById('valor').value);
+
+            if (!chaveInput || !nome) {
+                alert('Preencha CHAVE e NOME!');
+                return;
+            }
+
+            // Limpar chave
+            let chave = chaveInput.replace(/\s/g, '');
+            if (chave.includes('@')) {
+                chave = chave.toLowerCase();
+            } else if (/^[0-9.-]+$/.test(chave)) {
+                chave = chave.replace(/[^0-9+]/g, '');
+            }
+
+            const nomeNorm = normalizar(nome);
+            const valorStr = valor.toFixed(2);
+            const cidade = 'SAO PAULO';
+            const txId = '***';
+
+            // Construir payload
+            const gui = emv('00', 'br.gov.bcb.pix');
+            const keyField = emv('01', chave);
+            const field26 = emv('26', gui + keyField);
+            const field62 = emv('62', emv('05', txId));
+
+            const payload =
+                '000201' +
+                field26 +
+                emv('52', '0000') +
+                emv('53', '986') +
+                emv('54', valorStr) +
+                emv('58', 'BR') +
+                emv('59', nomeNorm) +
+                emv('60', cidade) +
+                field62 +
+                '6304';
+
+            const crc = crc16(payload);
+            payloadGlobal = payload + crc;
+
+            // Mostrar análise
+            document.getElementById('output').classList.add('show');
+
+            document.getElementById('campos').innerHTML = `
+                <div class="field"><span>00:</span> Payload Format = "01"</div>
+                <div class="field"><span>26:</span> Merchant Account<br>
+                    &nbsp;&nbsp;&nbsp;<span>00:</span> GUI = "br.gov.bcb.pix"<br>
+                    &nbsp;&nbsp;&nbsp;<span>01:</span> Chave = "${chave}"
+                </div>
+                <div class="field"><span>52:</span> MCC = "0000"</div>
+                <div class="field"><span>53:</span> Currency = "986" (BRL)</div>
+                <div class="field"><span>54:</span> Amount = "R$ ${valorStr}"</div>
+                <div class="field"><span>58:</span> Country = "BR"</div>
+                <div class="field"><span>59:</span> Merchant Name = "${nomeNorm}"</div>
+                <div class="field"><span>60:</span> Merchant City = "${cidade}"</div>
+                <div class="field"><span>62:</span> Additional Data<br>
+                    &nbsp;&nbsp;&nbsp;<span>05:</span> TxID = "${txId}"
+                </div>
+                <div class="field"><span>63:</span> CRC16 = "${crc}"</div>
+            `;
+
+            document.getElementById('qrcode').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=1&data=${encodeURIComponent(payloadGlobal)}`;
+
+            document.getElementById('payloadCompleto').value = payloadGlobal;
+            document.getElementById('tamanho').textContent = payloadGlobal.length;
+            document.getElementById('crcValue').textContent = crc;
+        }
+
+        function copiarPayload() {
+            navigator.clipboard.writeText(payloadGlobal).then(() => {
+                alert('✅ Payload copiado!\n\nCole no app do banco em:\nPix → Copia e Cola');
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remover Anúncios Duplicados - FairStream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 24px;
+            font-size: 28px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 12px;
+            color: #495057;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+            margin-top: 4px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .log {
+            background: #212529;
+            color: #00ff00;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .log-line {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🗑️ Remover Anúncios Duplicados</h1>
+
+        <div class="info-box" id="statsBox">
+            <h3>📊 Status Atual</h3>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Total de Anúncios</div>
+                    <div class="stat-value" id="totalAds">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Duplicados</div>
+                    <div class="stat-value" id="duplicates">-</div>
+                </div>
+            </div>
+            <button onclick="analisarAnuncios()"
+                style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">🔍 Analisar Anúncios</button>
+        </div>
+
+        <div class="warning" id="warningBox" style="display: none;">
+            <strong>⚠️ Duplicados Encontrados!</strong><br>
+            <span id="warningText"></span>
+        </div>
+
+        <div class="success" id="successMsg">
+            <strong>✅ Sucesso!</strong><br>
+            <span id="successText"></span>
+        </div>
+
+        <button id="cleanBtn" onclick="removerDuplicados()" style="display: none;">🧹 Remover Duplicados Agora</button>
+
+        <div class="log" id="logBox"></div>
+    </div>
+
+    <script>
+        let adsData = [];
+
+        function log(msg) {
+            const logBox = document.getElementById('logBox');
+            logBox.style.display = 'block';
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = '> ' + msg;
+            logBox.appendChild(line);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function analisarAnuncios() {
+            try {
+                log('Carregando anúncios do localStorage...');
+
+                // Busca em todas as possíveis chaves de anúncios
+                const possibleKeys = [
+                    'fs_campaigns',
+                    'fairstream_ads_v2',
+                    'fs_ads',
+                    'campaigns'
+                ];
+
+                let ads = [];
+                for (const key of possibleKeys) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                log(`Encontrado ${parsed.length} anúncios em '${key}'`);
+                                ads = parsed;
+                                adsData = { key, ads };
+                                break;
+                            }
+                        } catch (e) {
+                            log(`Erro ao parsear '${key}': ${e.message}`);
+                        }
+                    }
+                }
+
+                if (ads.length === 0) {
+                    alert('❌ Nenhum anúncio encontrado no localStorage!');
+                    return;
+                }
+
+                // Conta duplicados (anúncios com mesmo título)
+                const titlesCount = {};
+                ads.forEach(ad => {
+                    const title = ad.title || ad.name || 'Sem título';
+                    titlesCount[title] = (titlesCount[title] || 0) + 1;
+                });
+
+                const duplicateCount = Object.values(titlesCount).filter(count => count > 1).length;
+                const totalDuplicates = ads.length - Object.keys(titlesCount).length;
+
+                log(`Total de anúncios: ${ads.length}`);
+                log(`Anúncios únicos: ${Object.keys(titlesCount).length}`);
+                log(`Duplicados: ${totalDuplicates}`);
+
+                document.getElementById('totalAds').textContent = ads.length;
+                document.getElementById('duplicates').textContent = totalDuplicates;
+
+                if (totalDuplicates > 0) {
+                    document.getElementById('warningBox').style.display = 'block';
+                    document.getElementById('warningText').innerHTML =
+                        `Foram encontrados <strong>${totalDuplicates} anúncios duplicados</strong>.<br>` +
+                        `Será mantido apenas 1 de cada, removendo ${totalDuplicates} duplicatas.`;
+                    document.getElementById('cleanBtn').style.display = 'block';
+                    log('⚠️ Clique no botão abaixo para remover as duplicatas');
+                } else {
+                    alert('✅ Não há anúncios duplicados!');
+                    log('✅ Tudo limpo! Não há duplicatas.');
+                }
+
+            } catch (error) {
+                alert('❌ Erro ao analisar: ' + error.message);
+                log('❌ ERRO: ' + error.message);
+            }
+        }
+
+        function removerDuplicados() {
+            if (!confirm('⚠️ Tem certeza?\n\nIsso vai remover TODOS os anúncios duplicados, mantendo apenas 1 de cada.')) {
+                return;
+            }
+
+            try {
+                log('Iniciando remoção de duplicados...');
+
+                const { key, ads } = adsData;
+
+                // Remove duplicados mantendo apenas o primeiro de cada título
+                const seen = new Set();
+                const uniqueAds = ads.filter(ad => {
+                    const title = ad.title || ad.name || 'Sem título';
+                    if (seen.has(title)) {
+                        log(`❌ Removendo duplicado: "${title}"`);
+                        return false;
+                    }
+                    seen.add(title);
+                    log(`✅ Mantendo: "${title}"`);
+                    return true;
+                });
+
+                const removed = ads.length - uniqueAds.length;
+
+                // Salva de volta
+                localStorage.setItem(key, JSON.stringify(uniqueAds));
+                log(`💾 Salvando ${uniqueAds.length} anúncios únicos...`);
+
+                document.getElementById('warningBox').style.display = 'none';
+                document.getElementById('cleanBtn').style.display = 'none';
+                document.getElementById('successMsg').style.display = 'block';
+                document.getElementById('successText').innerHTML =
+                    `<strong>${removed} anúncios duplicados removidos!</strong><br>` +
+                    `Agora você tem ${uniqueAds.length} anúncios únicos.<br><br>` +
+                    `<strong>👉 Recarregue a página do admin (F5) para ver as mudanças.</strong>`;
+
+                log('✅ Concluído! Recarregue o admin (F5)');
+
+                // Atualiza contadores
+                document.getElementById('totalAds').textContent = uniqueAds.length;
+                document.getElementById('duplicates').textContent = '0';
+
+            } catch (error) {
+                alert('❌ Erro ao remover: ' + error.message);
+                log('❌ ERRO: ' + error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

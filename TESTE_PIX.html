@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Chave Pix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        input {
+            background: #2a2a2a;
+            color: white;
+        }
+
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #059669;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            word-break: break-all;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        img {
+            max-width: 100%;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 Teste sua Chave Pix</h1>
+    <p>Digite sua chave Pix e valor para testar se o QR Code é válido:</p>
+
+    <input type="text" id="pixKey" placeholder="Sua chave Pix (CPF, email, telefone ou chave aleatória)">
+    <input type="number" id="amount" placeholder="Valor (ex: 10.00)" value="10.00" step="0.01">
+    <input type="text" id="name" placeholder="Seu nome" value="TESTE">
+    <button onclick="testPix()">Gerar QR Code</button>
+
+    <div id="result"></div>
+
+    <script>
+        function buildField(id, value) {
+            const len = value.length.toString().padStart(2, '0');
+            return id + len + value;
+        }
+
+        function calculateCRC16(payload) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= payload.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function testPix() {
+            const pixKey = document.getElementById('pixKey').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const name = document.getElementById('name').value.trim();
+            const result = document.getElementById('result');
+
+            if (!pixKey) {
+                result.innerHTML = '<p class="error">❌ Digite uma chave Pix!</p>';
+                return;
+            }
+
+            try {
+                // Limpa a chave
+                let cleanKey = pixKey.replace(/\s+/g, '');
+
+                // Se não for email nem UUID, remove formatação
+                if (!cleanKey.includes('@') && cleanKey.length !== 36) {
+                    cleanKey = cleanKey.replace(/\D/g, '');
+                }
+
+                if (cleanKey.length < 11) {
+                    result.innerHTML = '<p class="error">❌ Chave Pix muito curta!</p>';
+                    return;
+                }
+
+                // Normaliza nome
+                const normalize = (str) => {
+                    return str
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^A-Z0-9 ]/gi, '')
+                        .toUpperCase()
+                        .substring(0, 25);
+                };
+
+                const merchantName = normalize(name || 'TESTE');
+                const merchantCity = normalize('SAO PAULO');
+                const value = amount.toFixed(2);
+
+                // Monta payload
+                const payload =
+                    '00020126' +
+                    buildField('26',
+                        '0014BR.GOV.BCB.PIX' +
+                        buildField('01', cleanKey)
+                    ) +
+                    '52040000' +
+                    '5303986' +
+                    buildField('54', value) +
+                    '5802BR' +
+                    buildField('59', merchantName) +
+                    buildField('60', merchantCity) +
+                    '6304';
+
+                const crc = calculateCRC16(payload);
+                const finalPayload = payload + crc;
+
+                result.innerHTML = `
+                    <p class="success">✅ QR Code gerado com sucesso!</p>
+                    <p><strong>Chave limpa:</strong> ${cleanKey}</p>
+                    <p><strong>Valor:</strong> R$ ${value}</p>
+                    <p><strong>Beneficiário:</strong> ${merchantName}</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalPayload)}" alt="QR Code">
+                    <p><strong>Pix Copia e Cola:</strong></p>
+                    <textarea readonly style="width:100%;height:100px;background:#1a1a1a;color:#10b981;border:1px solid #333;padding:10px;">${finalPayload}</textarea>
+                    <p style="font-size:12px;color:#666;">Teste este QR Code no seu app de banco. Se funcionar, sua chave está correta!</p>
+                `;
+            } catch (error) {
+                result.innerHTML = `<p class="error">❌ Erro: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

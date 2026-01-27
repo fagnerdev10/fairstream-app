@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pix - Teste Múltiplas APIs</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #0f0;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            background: #111;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #000;
+            border: 1px solid #0f0;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #0c0;
+        }
+
+        .results {
+            display: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .results.show {
+            display: grid;
+        }
+
+        .qr-box {
+            background: #111;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #0f0;
+            text-align: center;
+        }
+
+        .qr-box h3 {
+            color: #0f0;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .qr-box img,
+        .qr-box canvas {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 100%;
+        }
+
+        #qrcode3 {
+            display: inline-block;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .copy-btn {
+            background: #00f;
+            color: #fff;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #00c;
+        }
+
+        .payload-info {
+            background: #000;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 11px;
+            text-align: left;
+            word-break: break-all;
+            border: 1px solid #333;
+        }
+
+        .warning {
+            background: #f00;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #0f0;
+            color: #000;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔥 TESTE DEFINITIVO - 3 GERADORES DE QR CODE</h1>
+
+        <div class="warning">
+            ⚠️ SE A CHAVE EXISTE E NENHUM DOS 3 QR CODES FUNCIONAR:<br>
+            1. Tente o "Copia e Cola" em TODOS<br>
+            2. Se nem o Copia e Cola funcionar, o banco está BLOQUEANDO a transação (não é o código!)
+        </div>
+
+        <div class="input-section">
+            <h2 style="margin-bottom: 15px;">Dados do Pix</h2>
+            <input type="text" id="chave" placeholder="CHAVE PIX (email, CPF, telefone +55...)">
+            <input type="text" id="nome" value="RECEBEDOR TESTE" placeholder="NOME DO RECEBEDOR">
+            <input type="number" id="valor" value="1.00" step="0.01" placeholder="VALOR">
+            <button onclick="gerarTodos()">🚀 GERAR 3 VERSÕES DO QR CODE</button>
+        </div>
+
+        <div class="results" id="results">
+            <!-- API 1: QRServer -->
+            <div class="qr-box">
+                <h3>VERSÃO 1: QRServer API (Tamanho Grande)</h3>
+                <img id="qr1" src="" alt="QR Code 1">
+                <button class="copy-btn" onclick="copiar(1)">📋 Copiar Copia e Cola</button>
+                <div class="success" id="copied1">✅ Copiado!</div>
+                <div class="payload-info" id="info1"></div>
+            </div>
+
+            <!-- API 2: Chart.googleapis -->
+            <div class="qr-box">
+                <h3>VERSÃO 2: Google Charts API</h3>
+                <img id="qr2" src="" alt="QR Code 2">
+                <button class="copy-btn" onclick="copiar(2)">📋 Copiar Copia e Cola</button>
+                <div class="success" id="copied2">✅ Copiado!</div>
+                <div class="payload-info" id="info2"></div>
+            </div>
+
+            <!-- API 3: QRCode.js (Local) -->
+            <div class="qr-box">
+                <h3>VERSÃO 3: QRCode.js (Gerado Localmente)</h3>
+                <div id="qrcode3"></div>
+                <button class="copy-btn" onclick="copiar(3)">📋 Copiar Copia e Cola</button>
+                <div class="success" id="copied3">✅ Copiado!</div>
+                <div class="payload-info" id="info3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let payloadGlobal = '';
+
+        function emv(id, val) {
+            const len = String(val.length).padStart(2, '0');
+            return id + len + val;
+        }
+
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= data.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function normalizar(texto) {
+            return texto
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^A-Z0-9 ]/gi, " ")
+                .toUpperCase()
+                .substring(0, 25)
+                .trim();
+        }
+
+        function gerarTodos() {
+            const chaveInput = document.getElementById('chave').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const valor = parseFloat(document.getElementById('valor').value);
+
+            if (!chaveInput || !nome) {
+                alert('Preencha CHAVE e NOME!');
+                return;
+            }
+
+            // Limpar chave
+            let chave = chaveInput.replace(/\s/g, '');
+            if (chave.includes('@')) {
+                chave = chave.toLowerCase();
+            } else if (/^[0-9.-]+$/.test(chave)) {
+                chave = chave.replace(/[^0-9+]/g, '');
+            }
+
+            // Montar payload
+            const nomeNorm = normalizar(nome);
+            const valorStr = valor.toFixed(2);
+
+            const field26 = emv('26', emv('00', 'br.gov.bcb.pix') + emv('01', chave));
+            const field62 = emv('62', emv('05', '***'));
+
+            const payload =
+                '000201' +
+                field26 +
+                emv('52', '0000') +
+                emv('53', '986') +
+                emv('54', valorStr) +
+                emv('58', 'BR') +
+                emv('59', nomeNorm) +
+                emv('60', 'SAO PAULO') +
+                field62 +
+                '6304';
+
+            const crc = crc16(payload);
+            payloadGlobal = payload + crc;
+
+            // Exibir resultados
+            document.getElementById('results').classList.add('show');
+
+            // QR 1: QRServer (500x500, sem margem)
+            document.getElementById('qr1').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=0&data=${encodeURIComponent(payloadGlobal)}`;
+            document.getElementById('info1').innerHTML =
+                `Tamanho: 500x500px | Margem: 0<br>Chave: ${chave}<br>Payload: ${payloadGlobal.substring(0, 50)}...`;
+
+            // QR 2: Google Charts (400x400)
+            document.getElementById('qr2').src =
+                `https://chart.googleapis.com/chart?cht=qr&chs=400x400&chl=${encodeURIComponent(payloadGlobal)}`;
+            document.getElementById('info2').innerHTML =
+                `Tamanho: 400x400px<br>Chave: ${chave}<br>Payload: ${payloadGlobal.substring(0, 50)}...`;
+
+            // QR 3: QRCode.js (local)
+            document.getElementById('qrcode3').innerHTML = '';
+            new QRCode(document.getElementById('qrcode3'), {
+                text: payloadGlobal,
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            document.getElementById('info3').innerHTML =
+                `Gerado Localmente (256x256)<br>Chave: ${chave}<br>Payload: ${payloadGlobal.substring(0, 50)}...`;
+        }
+
+        function copiar(versao) {
+            navigator.clipboard.writeText(payloadGlobal).then(() => {
+                document.getElementById(`copied${versao}`).classList.add('show');
+                setTimeout(() => {
+                    document.getElementById(`copied${versao}`).classList.remove('show');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+
+</html>

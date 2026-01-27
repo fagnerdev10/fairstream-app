@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Meus Anúncios - FairStream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 12px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+
+        .controls {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-load {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ad-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .ad-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .ad-card.selected {
+            border-color: #ef4444;
+            background: #2a1a1a;
+        }
+
+        .ad-card.mine {
+            border-color: #10b981;
+        }
+
+        .ad-card.selected.mine {
+            border-color: #ef4444;
+            background: #2a1a1a;
+        }
+
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .ad-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            flex: 1;
+        }
+
+        .ad-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-mine {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-mock {
+            background: #6b7280;
+            color: white;
+        }
+
+        .ad-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+        }
+
+        .ad-info-item {
+            font-size: 13px;
+        }
+
+        .ad-info-label {
+            color: #888;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .ad-info-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .stats {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 32px;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📢 Gerenciar Meus Anúncios</h1>
+        <p class="subtitle">Selecione os anúncios que você NÃO quer e clique em deletar</p>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Total de Anúncios</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="selectedCount" style="color: #ef4444;">0</div>
+                <div class="stat-label">Selecionados para Deletar</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-load" onclick="carregarAnuncios()">🔄 Carregar Anúncios</button>
+            <button class="btn btn-delete" id="deleteBtn" onclick="deletarSelecionados()" disabled>🗑️ Deletar
+                Selecionados</button>
+            <span id="info" style="color: #888; font-size: 14px;"></span>
+        </div>
+
+        <div class="ad-list" id="adList">
+            <div class="empty-state">
+                👆 Clique em "Carregar Anúncios" para ver todos os seus anúncios
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ads = [];
+        let selected = new Set();
+
+        function carregarAnuncios() {
+            try {
+                const keys = ['fairstream_cmp_db', 'fs_campaigns', 'fairstream_ads_v2'];
+                let loaded = [];
+
+                for (const key of keys) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            loaded = parsed;
+                            document.getElementById('info').textContent = `Carregado de: ${key}`;
+                            break;
+                        }
+                    }
+                }
+
+                if (loaded.length === 0) {
+                    document.getElementById('adList').innerHTML = '<div class="empty-state">❌ Nenhum anúncio encontrado</div>';
+                    return;
+                }
+
+                ads = loaded;
+                renderizarAnuncios();
+
+                document.getElementById('stats').style.display = 'flex';
+                document.getElementById('totalCount').textContent = ads.length;
+
+            } catch (error) {
+                alert('Erro ao carregar: ' + error.message);
+            }
+        }
+
+        function renderizarAnuncios() {
+            const container = document.getElementById('adList');
+
+            if (ads.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum anúncio</div>';
+                return;
+            }
+
+            container.innerHTML = ads.map((ad, index) => {
+                // Identifica se é mock (IDs que começam com 'cmp' seguido de número simples ou advertiserId 'adv1')
+                const isMock = (
+                    ad.id === 'cmp1' ||
+                    ad.advertiserId === 'adv1' ||
+                    ad.title?.includes('React Avançado') ||
+                    ad.title?.includes('Curso de')
+                );
+
+                const isSelected = selected.has(ad.id);
+
+                return `
+                    <div class="ad-card ${isSelected ? 'selected' : ''} ${!isMock ? 'mine' : ''}" id="ad-${ad.id}">
+                        <div class="checkbox-wrapper" onclick="toggleSelect('${ad.id}')">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); toggleSelect('${ad.id}')">
+                            <div style="flex: 1;">
+                                <div class="ad-header">
+                                    <div class="ad-title">${ad.title || 'Sem título'}</div>
+                                    <div class="ad-badge ${!isMock ? 'badge-mine' : 'badge-mock'}">
+                                        ${!isMock ? '✅ MEU' : '🔧 EXEMPLO'}
+                                    </div>
+                                </div>
+                                <div class="ad-info">
+                                    <div class="ad-info-item">
+                                        <span class="ad-info-label">ID</span>
+                                        <span class="ad-info-value">${ad.id}</span>
+                                    </div>
+                                    <div class="ad-info-item">
+                                        <span class="ad-info-label">Tipo</span>
+                                        <span class="ad-info-value">${ad.type || '-'}</span>
+                                    </div>
+                                    <div class="ad-info-item">
+                                        <span class="ad-info-label">Status</span>
+                                        <span class="ad-info-value">${ad.status || '-'}</span>
+                                    </div>
+                                    <div class="ad-info-item">
+                                        <span class="ad-info-label">Criado em</span>
+                                        <span class="ad-info-value">${ad.createdAt || '-'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            atualizarContadores();
+        }
+
+        function toggleSelect(id) {
+            if (selected.has(id)) {
+                selected.delete(id);
+            } else {
+                selected.add(id);
+            }
+
+            const card = document.getElementById('ad-' + id);
+            const checkbox = card.querySelector('input[type="checkbox"]');
+
+            if (selected.has(id)) {
+                card.classList.add('selected');
+                checkbox.checked = true;
+            } else {
+                card.classList.remove('selected');
+                checkbox.checked = false;
+            }
+
+            atualizarContadores();
+        }
+
+        function atualizarContadores() {
+            document.getElementById('selectedCount').textContent = selected.size;
+            document.getElementById('deleteBtn').disabled = selected.size === 0;
+        }
+
+        function deletarSelecionados() {
+            if (selected.size === 0) return;
+
+            if (!confirm(`⚠️ Tem certeza que quer deletar ${selected.size} anúncio(s)?\n\nEsta ação NÃO pode ser desfeita!`)) {
+                return;
+            }
+
+            const remaining = ads.filter(ad => !selected.has(ad.id));
+
+            // Salva de volta
+            const key = 'fairstream_cmp_db';
+            localStorage.setItem(key, JSON.stringify(remaining));
+
+            alert(`✅ ${selected.size} anúncio(s) deletado(s)!\n\nRecarregue o admin (F5) para ver as mudanças.`);
+
+            selected.clear();
+            ads = remaining;
+            renderizarAnuncios();
+
+            document.getElementById('totalCount').textContent = ads.length;
+            document.getElementById('selectedCount').textContent = 0;
+        }
+    </script>
+</body>
+
+</html>

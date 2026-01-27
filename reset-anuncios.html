@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>LIMPAR TUDO - FairStream</title>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #f00;
+            color: #fff;
+            border: 3px solid #fff;
+            padding: 30px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 30px 0;
+        }
+
+        button:hover {
+            background: #fff;
+            color: #f00;
+        }
+
+        .output {
+            background: #111;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #0f0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚨 RESET COMPLETO DO SISTEMA DE ANÚNCIOS</h1>
+    <p>Esta ação vai:</p>
+    <ul>
+        <li>DELETAR todos os anúncios (seus e de exemplo)</li>
+        <li>LIMPAR completamente o localStorage de anúncios</li>
+        <li>Sistema ficará ZERADO para você adicionar novos</li>
+    </ul>
+
+    <button onclick="resetarTudo()">🔥 RESETAR TUDO AGORA</button>
+
+    <div class="output" id="output">Aguardando ação...</div>
+
+    <script>
+        function log(msg) {
+            const output = document.getElementById('output');
+            output.textContent += msg + '\n';
+        }
+
+        function resetarTudo() {
+            if (!confirm('⚠️⚠️⚠️ ÚLTIMA CHANCE ⚠️⚠️⚠️\n\nIsso vai DELETAR TUDO relacionado a anúncios.\n\nTem CERTEZA ABSOLUTA?')) {
+                return;
+            }
+
+            const output = document.getElementById('output');
+            output.textContent = '';
+
+            log('🔥 INICIANDO RESET COMPLETO...\n');
+
+            // Lista TODAS as chaves
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                allKeys.push(localStorage.key(i));
+            }
+
+            log(`📋 Total de chaves no localStorage: ${allKeys.length}\n`);
+
+            // Remove TODAS as chaves relacionadas
+            let deleted = 0;
+            allKeys.forEach(key => {
+                if (key && (
+                    key.includes('ad') ||
+                    key.includes('campaign') ||
+                    key.includes('cmp') ||
+                    key === 'fairstream_cmp_db' ||
+                    key === 'fairstream_ads_v2' ||
+                    key === 'fairstream_tx_db' ||
+                    key === 'fs_campaigns'
+                )) {
+                    localStorage.removeItem(key);
+                    log(`❌ DELETADO: ${key}`);
+                    deleted++;
+                }
+            });
+
+            log(`\n✅ Total deletado: ${deleted} chaves`);
+            log('\n🎯 RESET COMPLETO!');
+            log('\n📌 Agora:');
+            log('   1. Feche esta janela');
+            log('   2. Vá em: http://localhost:3000/#/admin');
+            log('   3. Aperte CTRL + SHIFT + R (hard reload)');
+            log('   4. O sistema vai recriar apenas 1 anúncio de exemplo');
+            log('   5. Você pode deletá-lo e adicionar os seus\n');
+
+            alert('✅ RESET CONCLUÍDO!\n\nVá no admin e dê CTRL+SHIFT+R');
+        }
+    </script>
+</body>
+
+</html>

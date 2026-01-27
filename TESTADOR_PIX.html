@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testador de Pix - Debug Completo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .warning {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #00cc66;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .result {
+            display: none;
+            background: #0f0f0f;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #00ff88;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .qr-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .qr-container img {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 300px;
+        }
+
+        .payload-debug {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-x: auto;
+            margin-top: 15px;
+            border: 1px solid #333;
+        }
+
+        .payload-debug div {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00ff88;
+            padding-left: 10px;
+        }
+
+        .copy-btn {
+            background: #3b82f6;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+        }
+
+        .info-box {
+            background: #1e40af;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .success {
+            background: #15803d;
+        }
+
+        .error {
+            background: #991b1b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 Testador de Pix Completo</h1>
+        <p style="color: #888; margin-bottom: 20px;">Gere e valide QR Codes Pix com debug completo de cada campo EMV</p>
+
+        <div class="warning">
+            ⚠️ IMPORTANTE: Se o QR Code não funcionar, o problema é 99% a CHAVE PIX que você digitou. Verifique se ela
+            está ativa e correta no seu banco!
+        </div>
+
+        <div class="section">
+            <h2>📝 Dados do Pagamento</h2>
+
+            <label>Chave Pix do Recebedor *</label>
+            <input type="text" id="pixKey"
+                placeholder="seuemail@gmail.com ou 12345678900 (CPF) ou +5511999999999 (Tel)">
+
+            <label>Nome do Recebedor *</label>
+            <input type="text" id="nome" value="FAGNER SANTOS" placeholder="Nome completo">
+
+            <label>Cidade</label>
+            <input type="text" id="cidade" value="SAO PAULO" placeholder="SAO PAULO">
+
+            <label>Valor (R$)</label>
+            <input type="number" id="valor" value="1.00" step="0.01" min="0.01">
+
+            <button onclick="gerarPix()">🚀 Gerar QR Code Pix</button>
+        </div>
+
+        <div class="result" id="result">
+            <div class="section">
+                <h2>✅ QR Code Gerado</h2>
+                <div class="qr-container">
+                    <img id="qrImage" src="" alt="QR Code">
+                </div>
+                <button class="copy-btn" onclick="copiarPayload()">📋 Copiar Código Copia e Cola</button>
+                <div class="info-box success" id="copiado" style="display: none;">
+                    ✅ Código copiado! Cole no seu app bancário em "Pix Copia e Cola"
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🔬 Debug do Payload (Campo por Campo)</h2>
+                <div class="payload-debug" id="debug"></div>
+            </div>
+
+            <div class="section">
+                <h2>📄 Payload Completo</h2>
+                <textarea id="payloadFinal" style="font-size: 10px; height: 100px;" readonly></textarea>
+            </div>
+
+            <div class="info-box">
+                <strong>Como Testar:</strong><br>
+                1. Escaneie o QR Code com o app do seu banco<br>
+                2. Se não funcionar, clique em "Copiar Código Copia e Cola"<br>
+                3. No app do banco, vá em Pix → Copia e Cola → Cole o código<br>
+                4. Se AINDA não funcionar, a chave Pix está INATIVA ou ERRADA!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function emv(id, valor) {
+            const len = String(valor.length).padStart(2, '0');
+            return id + len + valor;
+        }
+
+        function crc16(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= data.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    if ((crc & 0x8000) !== 0) {
+                        crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+                    } else {
+                        crc = (crc << 1) & 0xFFFF;
+                    }
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function normalizarTexto(texto) {
+            return texto
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^A-Z0-9 ]/gi, " ")
+                .toUpperCase()
+                .substring(0, 25)
+                .trim();
+        }
+
+        function validarChavePix(chave) {
+            // Email
+            if (chave.includes('@')) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(chave)) {
+                    return { valido: false, erro: 'E-mail inválido' };
+                }
+                return { valido: true, tipo: 'E-mail' };
+            }
+
+            // CPF (11 dígitos)
+            if (/^\d{11}$/.test(chave)) {
+                return { valido: true, tipo: 'CPF' };
+            }
+
+            // CNPJ (14 dígitos)
+            if (/^\d{14}$/.test(chave)) {
+                return { valido: true, tipo: 'CNPJ' };
+            }
+
+            // Telefone com DDI (+5511999999999)
+            if (/^\+55\d{10,11}$/.test(chave)) {
+                return { valido: true, tipo: 'Telefone' };
+            }
+
+            // Telefone sem DDI (11999999999)
+            if (/^\d{10,11}$/.test(chave)) {
+                return { valido: true, tipo: 'Telefone (sem +55)', aviso: 'Telefone deve ter +55 na frente!' };
+            }
+
+            // Chave aleatória (EVP - UUID)
+            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(chave)) {
+                return { valido: true, tipo: 'Chave Aleatória (EVP)' };
+            }
+
+            return { valido: false, erro: 'Formato de chave desconhecido' };
+        }
+
+        function gerarPix() {
+            const pixKey = document.getElementById('pixKey').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const cidade = document.getElementById('cidade').value.trim();
+            const valor = parseFloat(document.getElementById('valor').value);
+
+            if (!pixKey) {
+                alert('Digite a chave Pix!');
+                return;
+            }
+
+            if (!nome) {
+                alert('Digite o nome do recebedor!');
+                return;
+            }
+
+            // Limpa a chave
+            let chave = pixKey.replace(/\s/g, '');
+
+            // Email: lowercase
+            if (chave.includes('@')) {
+                chave = chave.toLowerCase();
+            }
+            // CPF/Tel: apenas números
+            else if (/^[0-9.-]+$/.test(chave)) {
+                chave = chave.replace(/[^0-9]/g, '');
+            }
+
+            // ✅ VALIDA O FORMATO DA CHAVE
+            const validacao = validarChavePix(chave);
+            if (!validacao.valido) {
+                alert(`❌ CHAVE PIX INVÁLIDA!\n\n${validacao.erro}\n\nVerifique se você digitou corretamente:\n- E-mail: nome@dominio.com\n- CPF: 12345678900 (11 dígitos)\n- Telefone: +5511999999999\n- Chave Aleatória: UUID completo`);
+                return;
+            }
+
+            if (validacao.aviso) {
+                if (!confirm(`⚠️ ${validacao.aviso}\n\nDeseja continuar mesmo assim?`)) {
+                    return;
+                }
+            }
+
+            const nomeNorm = normalizarTexto(nome);
+            const cidadeNorm = normalizarTexto(cidade || 'SAO PAULO');
+            const valorStr = valor.toFixed(2);
+            const txId = '***';
+
+            // Construção EMV
+            const field26 = emv('26', emv('00', 'br.gov.bcb.pix') + emv('01', chave));
+            const field62 = emv('62', emv('05', txId));
+
+            const payload =
+                '000201' +
+                field26 +
+                emv('52', '0000') +
+                emv('53', '986') +
+                emv('54', valorStr) +
+                emv('58', 'BR') +
+                emv('59', nomeNorm) +
+                emv('60', cidadeNorm) +
+                field62 +
+                '6304';
+
+            const crc = crc16(payload);
+            const payloadFinal = payload + crc;
+
+            // Exibir resultado
+            document.getElementById('result').classList.add('show');
+            document.getElementById('qrImage').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=1&data=${encodeURIComponent(payloadFinal)}`;
+
+            document.getElementById('payloadFinal').value = payloadFinal;
+
+            // Debug
+            const debugHtml = `
+                <div><strong>00:</strong> Payload Format = "01"</div>
+                <div><strong>26:</strong> Merchant Account = GUI: "br.gov.bcb.pix" + Chave: "${chave}"</div>
+                <div><strong>52:</strong> MCC = "0000"</div>
+                <div><strong>53:</strong> Currency = "986" (BRL)</div>
+                <div><strong>54:</strong> Amount = "R$ ${valorStr}"</div>
+                <div><strong>58:</strong> Country = "BR"</div>
+                <div><strong>59:</strong> Merchant Name = "${nomeNorm}"</div>
+                <div><strong>60:</strong> Merchant City = "${cidadeNorm}"</div>
+                <div><strong>62:</strong> Additional Data = TxID: "${txId}"</div>
+                <div><strong>63:</strong> CRC16 = "${crc}"</div>
+                <hr style="border-color: #333; margin: 15px 0;">
+                <div style="color: #00ff88;"><strong>Chave Usada:</strong> ${chave}</div>
+                <div style="color: #00ff88;"><strong>Tamanho do Payload:</strong> ${payloadFinal.length} caracteres</div>
+            `;
+            document.getElementById('debug').innerHTML = debugHtml;
+
+            window.payloadAtual = payloadFinal;
+        }
+
+        function copiarPayload() {
+            const payload = window.payloadAtual;
+            navigator.clipboard.writeText(payload).then(() => {
+                document.getElementById('copiado').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('copiado').style.display = 'none';
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+
+</html>

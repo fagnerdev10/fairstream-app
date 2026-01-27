@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Debug Ads System</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #000;
+            color: #0f0;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #0f0;
+        }
+
+        .error {
+            color: #f00;
+        }
+
+        .success {
+            color: #0f0;
+        }
+
+        .warning {
+            color: #ff0;
+        }
+
+        pre {
+            background: #111;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #0a0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 FairStream Ads Debug Console</h1>
+
+    <div class="section">
+        <h2>Quick Actions</h2>
+        <button onclick="checkSystem()">🔄 Check System</button>
+        <button onclick="clearQueues()">🗑️ Clear Queues</button>
+        <button onclick="rebuildQueues()">🔨 Rebuild Queues</button>
+        <button onclick="addTestCampaign()">➕ Add Test Campaign</button>
+        <button onclick="addBalance()">💰 Add Balance (10k views)</button>
+    </div>
+
+    <div class="section">
+        <h2>System Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <div class="section">
+        <h2>Campaigns</h2>
+        <div id="campaigns"></div>
+    </div>
+
+    <div class="section">
+        <h2>Advertisers</h2>
+        <div id="advertisers"></div>
+    </div>
+
+    <div class="section">
+        <h2>Ad Queues</h2>
+        <div id="queues"></div>
+    </div>
+
+    <div class="section">
+        <h2>Console Output</h2>
+        <pre id="console"></pre>
+    </div>
+
+    <script>
+        const log = (msg, type = 'info') => {
+            const consoleEl = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : type === 'warning' ? '#ff0' : '#0af';
+            consoleEl.innerHTML += `<span style="color:${color}">[${timestamp}] ${msg}</span>\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        };
+
+        function checkSystem() {
+            log('=== CHECKING SYSTEM ===', 'info');
+
+            const campaigns = JSON.parse(localStorage.getItem('fairstream_cmp_db') || '[]');
+            const advertisers = JSON.parse(localStorage.getItem('fairstream_ads_db') || '[]');
+            const queues = JSON.parse(localStorage.getItem('fairstream_ad_queues_v2') || '{}');
+
+            log(`Total Campaigns: ${campaigns.length}`, 'info');
+            log(`Active Campaigns: ${campaigns.filter(c => c.status === 'active').length}`, 'success');
+            log(`Waiting Approval: ${campaigns.filter(c => c.status === 'waiting_approval').length}`, 'warning');
+            log(`Total Advertisers: ${advertisers.length}`, 'info');
+
+            // Display data
+            document.getElementById('campaigns').innerHTML = '<pre>' + JSON.stringify(campaigns.map(c => ({
+                id: c.id,
+                title: c.title,
+                status: c.status,
+                location: c.location,
+                type: c.type,
+                categories: c.targetCategories,
+                advertiserId: c.advertiserId
+            })), null, 2) + '</pre>';
+
+            document.getElementById('advertisers').innerHTML = '<pre>' + JSON.stringify(advertisers.map(a => ({
+                id: a.id,
+                name: a.companyName,
+                balance: a.balance,
+                standardImpressions: a.standardImpressions,
+                homepageImpressions: a.homepageImpressions
+            })), null, 2) + '</pre>';
+
+            document.getElementById('queues').innerHTML = '<pre>' + JSON.stringify(queues, null, 2) + '</pre>';
+
+            // Status
+            let statusHtml = '';
+            if (campaigns.length === 0) {
+                statusHtml += '<p class="error">❌ No campaigns found</p>';
+            } else {
+                statusHtml += '<p class="success">✅ Campaigns exist</p>';
+            }
+
+            if (advertisers.length === 0) {
+                statusHtml += '<p class="error">❌ No advertisers found</p>';
+            } else {
+                statusHtml += '<p class="success">✅ Advertisers exist</p>';
+            }
+
+            const activeCount = campaigns.filter(c => c.status === 'active').length;
+            if (activeCount === 0) {
+                statusHtml += '<p class="warning">⚠️ No active campaigns</p>';
+            } else {
+                statusHtml += `<p class="success">✅ ${activeCount} active campaigns</p>`;
+            }
+
+            const hasBalance = advertisers.some(a => a.standardImpressions > 0 || a.homepageImpressions > 0);
+            if (!hasBalance) {
+                statusHtml += '<p class="error">❌ No advertiser has balance</p>';
+            } else {
+                statusHtml += '<p class="success">✅ Advertisers have balance</p>';
+            }
+
+            if (Object.keys(queues).length === 0) {
+                statusHtml += '<p class="warning">⚠️ Queues are empty (will rebuild on first request)</p>';
+            } else {
+                statusHtml += `<p class="success">✅ ${Object.keys(queues).length} queues exist</p>`;
+            }
+
+            document.getElementById('status').innerHTML = statusHtml;
+
+            log('=== CHECK COMPLETE ===', 'success');
+        }
+
+        function clearQueues() {
+            localStorage.removeItem('fairstream_ad_queues_v2');
+            log('Queues cleared', 'success');
+            checkSystem();
+        }
+
+        function rebuildQueues() {
+            log('Rebuilding queues...', 'info');
+            const campaigns = JSON.parse(localStorage.getItem('fairstream_cmp_db') || '[]');
+            const activeCampaigns = campaigns.filter(c => c.status === 'active');
+
+            const queues = {
+                'HOME': [],
+                'GENERAL_VIDEO': []
+            };
+
+            activeCampaigns.forEach(campaign => {
+                if (campaign.location === 'home') {
+                    queues['HOME'].push(campaign.id);
+                } else {
+                    queues['GENERAL_VIDEO'].push(campaign.id);
+                    campaign.targetCategories.forEach(cat => {
+                        const normalized = cat.toLowerCase().trim();
+                        if (!queues[normalized]) queues[normalized] = [];
+                        if (!queues[normalized].includes(campaign.id)) {
+                            queues[normalized].push(campaign.id);
+                        }
+                    });
+                }
+            });
+
+            localStorage.setItem('fairstream_ad_queues_v2', JSON.stringify(queues));
+            log('Queues rebuilt successfully', 'success');
+            checkSystem();
+        }
+
+        function addTestCampaign() {
+            const campaigns = JSON.parse(localStorage.getItem('fairstream_cmp_db') || '[]');
+            const advertisers = JSON.parse(localStorage.getItem('fairstream_ads_db') || '[]');
+
+            if (advertisers.length === 0) {
+                log('Creating test advertiser first...', 'warning');
+                const testAdv = {
+                    id: 'adv_test',
+                    companyName: 'Test Advertiser',
+                    balance: 5000,
+                    standardImpressions: 50000,
+                    homepageImpressions: 20000,
+                    plan: 'pro'
+                };
+                advertisers.push(testAdv);
+                localStorage.setItem('fairstream_ads_db', JSON.stringify(advertisers));
+            }
+
+            const testCampaign = {
+                id: `camp_test_${Date.now()}`,
+                advertiserId: advertisers[0].id,
+                type: 'text',
+                location: 'home',
+                title: 'Test Home Campaign',
+                desktopDescription: 'This is a test campaign for debugging',
+                mobileDescription: 'Test campaign',
+                targetUrl: 'https://google.com',
+                bannerImage: 'https://placehold.co/300x100/000/FFF?text=Test+Ad',
+                status: 'active',
+                budget: 100,
+                spent: 0,
+                impressions: 0,
+                clicks: 0,
+                targetCategories: ['Tecnologia', 'Design'],
+                createdAt: new Date().toISOString()
+            };
+
+            campaigns.push(testCampaign);
+            localStorage.setItem('fairstream_cmp_db', JSON.stringify(campaigns));
+            log('Test campaign created: ' + testCampaign.id, 'success');
+            rebuildQueues();
+        }
+
+        function addBalance() {
+            const advertisers = JSON.parse(localStorage.getItem('fairstream_ads_db') || '[]');
+            if (advertisers.length === 0) {
+                log('No advertisers found', 'error');
+                return;
+            }
+
+            advertisers.forEach(adv => {
+                adv.standardImpressions += 10000;
+                adv.homepageImpressions += 10000;
+            });
+
+            localStorage.setItem('fairstream_ads_db', JSON.stringify(advertisers));
+            log('Added 10k views to all advertisers', 'success');
+            checkSystem();
+        }
+
+        // Auto-check on load
+        window.onload = () => {
+            log('Debug console loaded', 'success');
+            checkSystem();
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Força Limpeza de Anúncios - FairStream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            background: #2a2a2a;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid #444;
+        }
+
+        h1 {
+            color: #ff4444;
+            margin-bottom: 24px;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .status {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .status-line {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .warning {
+            color: #ffaa00;
+        }
+
+        .info {
+            color: #00aaff;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .warning-box {
+            background: rgba(255, 170, 0, 0.1);
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🗑️ FORÇA LIMPEZA</h1>
+
+        <div class="warning-box">
+            <strong>⚠️ ATENÇÃO:</strong> Esta ação vai:<br>
+            • Deletar TODOS os anúncios do localStorage<br>
+            • Resetar o sistema de anúncios<br>
+            • Recriar com apenas 1 anúncio limpo
+        </div>
+
+        <div class="status" id="status">
+            <div class="status-line info">💡 Clique no botão abaixo para iniciar a limpeza forçada...</div>
+        </div>
+
+        <button onclick="forcarLimpeza()" id="cleanBtn">
+            🚀 FORÇAR LIMPEZA TOTAL
+        </button>
+    </div>
+
+    <script>
+        function log(msg, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const line = document.createElement('div');
+            line.className = `status-line ${type}`;
+            line.textContent = msg;
+            statusDiv.appendChild(line);
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        function forcarLimpeza() {
+            if (!confirm('⚠️ TEM CERTEZA?\n\nIsso vai APAGAR TODOS os anúncios e recriar do zero.\n\nEsta ação NÃO pode ser desfeita!')) {
+                return;
+            }
+
+            const btn = document.getElementById('cleanBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ LIMPANDO...';
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '';
+
+            log('🔍 Iniciando limpeza forçada...', 'warning');
+
+            try {
+                // PASSO 1: Remove TODAS as chaves relacionadas a anúncios
+                const keysToDelete = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (
+                        key.includes('ad') ||
+                        key.includes('campaign') ||
+                        key.includes('cmp') ||
+                        key.includes('_ad_') ||
+                        key.includes('fairstream_') && (key.includes('ad') || key.includes('cmp'))
+                    )) {
+                        keysToDelete.push(key);
+                    }
+                }
+
+                log(`📋 Encontradas ${keysToDelete.length} chaves para deletar`, 'info');
+
+                keysToDelete.forEach(key => {
+                    localStorage.removeItem(key);
+                    log(`  ❌ Deletado: ${key}`, 'error');
+                });
+
+                // PASSO 2: Espera 500ms para garantir que foi deletado
+                setTimeout(() => {
+                    log('⏳ Aguardando confirmação de deleção...', 'warning');
+
+                    setTimeout(() => {
+                        // PASSO 3: Recria com 1 anúncio limpo APENAS
+                        const cleanCampaigns = [{
+                            id: 'cmp_' + Date.now(),
+                            advertiserId: 'adv1',
+                            type: 'text',
+                            location: 'video',
+                            title: 'Anúncio Modelo',
+                            desktopDescription: 'Este é o único anúncio no sistema.',
+                            mobileDescription: 'Anúncio modelo.',
+                            targetUrl: 'https://fairstream.com',
+                            bannerImage: '',
+                            status: 'pending',
+                            budget: 100.00,
+                            spent: 0,
+                            impressions: 0,
+                            clicks: 0,
+                            targetCategories: ['Geral'],
+                            createdAt: new Date().toISOString().split('T')[0]
+                        }];
+
+                        localStorage.setItem('fairstream_cmp_db', JSON.stringify(cleanCampaigns));
+                        log('✅ Criado 1 anúncio limpo', 'success');
+
+                        // PASSO 4: Recria estruturas vazias
+                        localStorage.setItem('fairstream_tx_db', JSON.stringify([]));
+                        localStorage.setItem('fairstream_subs_db', JSON.stringify([]));
+                        log('✅ Estruturas auxiliares recriadas', 'success');
+
+                        log('', 'info');
+                        log('🎉 LIMPEZA CONCLUÍDA COM SUCESSO!', 'success');
+                        log('', 'info');
+                        log('📌 PRÓXIMOS PASSOS:', 'warning');
+                        log('  1. Feche esta janela', 'info');
+                        log('  2. Vá para: http://localhost:3000/#/admin', 'info');
+                        log('  3. Aperte CTRL + F5 (força reload)', 'info');
+                        log('  4. Verifique se agora tem apenas 1 anúncio', 'info');
+
+                        btn.textContent = '✅ LIMPEZA CONCLUÍDA';
+                        btn.style.background = 'linear-gradient(135deg, #00aa00 0%, #007700 100%)';
+
+                        setTimeout(() => {
+                            if (confirm('✅ Limpeza concluída!\n\nDeseja abrir o admin agora?')) {
+                                window.open('http://localhost:3000/#/admin', '_blank');
+                            }
+                        }, 1000);
+
+                    }, 500);
+                }, 500);
+
+            } catch (error) {
+                log('❌ ERRO: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = '🚀 FORÇAR LIMPEZA TOTAL';
+            }
+        }
+    </script>
+</body>
+
+</html>

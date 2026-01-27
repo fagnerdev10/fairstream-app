@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teste de Campanhas - Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Teste de Campanhas do Supabase</h1>
+  
+  <h2>Campanhas com location='video':</h2>
+  <div id="video-campaigns"></div>
+  
+  <h2>Campanhas com location='home':</h2>
+  <div id="home-campaigns"></div>
+
+  <script>
+    // Configuração do Supabase (COLE SUAS CREDENCIAIS)
+    const SUPABASE_URL = 'SUA_URL_AQUI';
+    const SUPABASE_ANON_KEY = 'SUA_CHAVE_AQUI';
+    
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function testarCampanhas() {
+      console.log('🔍 Buscando campanhas do Supabase...');
+      
+      // Busca TODAS as campanhas
+      const { data: allCampaigns, error } = await supabaseClient
+        .from('campaigns')
+        .select('*');
+      
+      if (error) {
+        console.error('❌ Erro:', error);
+        return;
+      }
+      
+      console.log('📊 Total de campanhas no banco:', allCampaigns.length);
+      
+      // Filtra por location
+      const videoCampaigns = allCampaigns.filter(c => 
+        c.location === 'video' && 
+        (c.status === 'active' || c.status === 'ACTIVE')
+      );
+      
+      const homeCampaigns = allCampaigns.filter(c => 
+        c.location === 'home' && 
+        (c.status === 'active' || c.status === 'ACTIVE')
+      );
+      
+      // Mostra campanhas de VÍDEO
+      const videoDiv = document.getElementById('video-campaigns');
+      if (videoCampaigns.length === 0) {
+        videoDiv.innerHTML = '<p style="color:red">❌ Nenhuma campanha ATIVA para vídeos encontrada!</p>';
+      } else {
+        videoDiv.innerHTML = videoCampaigns.map(c => `
+          <div style="border:2px solid ${c.type === 'image' ? 'blue' : 'green'}; margin:10px; padding:10px;">
+            <strong>${c.type === 'image' ? '🖼️' : '📝'} ${c.title}</strong><br>
+            Tipo: ${c.type}<br>
+            Status: ${c.status}<br>
+            ID: ${c.id}<br>
+          </div>
+        `).join('');
+      }
+      
+      // Mostra campanhas de HOME
+      const homeDiv = document.getElementById('home-campaigns');
+      if (homeCampaigns.length === 0) {
+        homeDiv.innerHTML = '<p style="color:red">❌ Nenhuma campanha ATIVA para home encontrada!</p>';
+      } else {
+        homeDiv.innerHTML = homeCampaigns.map(c => `
+          <div style="border:2px solid orange; margin:10px; padding:10px;">
+            <strong>${c.type === 'image' ? '🖼️' : '📝'} ${c.title}</strong><br>
+            Tipo: ${c.type}<br>
+            Status: ${c.status}<br>
+          </div>
+        `).join('');
+      }
+      
+      console.log('✅ Campanhas de VÍDEO:', videoCampaigns);
+      console.log('✅ Campanhas de HOME:', homeCampaigns);
+    }
+    
+    testarCampanhas();
+  </script>
+</body>
+</html>
