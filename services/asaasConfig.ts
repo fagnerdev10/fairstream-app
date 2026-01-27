@@ -1,5 +1,6 @@
 export const ASAAS_CONFIG = {
-    // ✅ SANDBOX/TESTE - Chaves serão lidas do LocalStorage (Painel do Dono)
-    API_KEY: "",
-    WALLET_ID: ""
+    // ✅ PRODUÇÃO - Chaves lidas das Variáveis de Ambiente
+    API_KEY: (import.meta as any).env?.VITE_ASAAS_API_KEY || "",
+    WALLET_ID: (import.meta as any).env?.VITE_ASAAS_WALLET_ID || ""
 };
+

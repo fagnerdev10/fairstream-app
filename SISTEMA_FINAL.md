@@ -2,13 +2,11 @@
 
 ## 🎯 Configuração Atual
 
-### API Asaas (Produção)
+### API Asaas (Configuração)
 
-```
-API Key: $aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjhlZDIzZTNlLTVhNzMtNGNhYy1hZTQ4LTRlNjNkZjkwMjE2ZDo6JGFhY2hfYWE1NzUxNGEtNTY0ZC00NGU1LWIyM2ItNjFlNjEyNmY5YjA4
-Wallet ID Plataforma: 3eb2914f-0766-43e5-ae25-bba3b90199f3
-Ambiente: PRODUÇÃO ✅
-```
+> [!IMPORTANT]
+> As chaves de API agora são gerenciadas via Variáveis de Ambiente no Cloudflare.
+> Verifique o painel administrativo para detalhes de integração.
 
 ---
 

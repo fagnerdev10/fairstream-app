@@ -2,10 +2,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const getApiKey = () => {
-  const key = (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-    'AIzaSyDMYUBMy7Z9MZ0dd_eVmtkz3sH8jyPqiCg';
-  return key;
+  return (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
 };
+
 
 const getModel = () => {
   return (import.meta as any).env?.VITE_GEMINI_MODEL || "gemini-2.5-flash";

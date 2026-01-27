@@ -4,13 +4,14 @@ import { payoutService } from './payoutService';
 
 // Credenciais do Dono da Plataforma ( FairStream )
 export const MP_CONFIG = {
-  clientId: "1816534017966802",
-  clientSecret: "sPC2g3zjaz85OpRDMXg4Q9e1TTVxR18v",
-  publicKey: "APP_USR-50a9006b-ab9d-4406-ba28-e5002e14bd14",
-  platformAccessToken: "APP_USR-1816534017966802-123020-7ddfccc1944e45fef38bcb26647ae32f-3102834096",
+  clientId: (import.meta as any).env?.VITE_MP_CLIENT_ID || "",
+  clientSecret: (import.meta as any).env?.VITE_MP_CLIENT_SECRET || "",
+  publicKey: (import.meta as any).env?.VITE_MP_PUBLIC_KEY || "",
+  platformAccessToken: (import.meta as any).env?.VITE_MP_ACCESS_TOKEN || "",
   // No Vite dev, window.location.origin pode mudar se usar ngrok
   redirectUri: window.location.origin + "/callback.html",
 };
+
 
 export const mercadoPagoService = {
   // Passo 1: Gerar URL de conexão para o criador
