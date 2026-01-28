@@ -368,20 +368,6 @@ const Upload: React.FC = () => {
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-40">
       <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>{editId ? 'Editar Vídeo' : 'Upload de Estúdio'}</h1>
 
-      {/* Info Banner */}
-      <div className="bg-blue-900/20 border border-blue-900/50 rounded-lg p-4 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertTriangle size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-200">
-            <p className="font-bold mb-1">ℹ️ Modo de Demonstração</p>
-            <p className="leading-relaxed">
-              Para garantir que os vídeos funcionem em qualquer conta/sessão, todos os uploads usam um <strong>vídeo de exemplo público</strong>.
-              Em produção real, os vídeos seriam enviados para um servidor de armazenamento (AWS S3, Cloudinary, etc.).
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* COLUNA ESQUERDA: VÍDEO & CAPA */}
         <div className="lg:col-span-1 space-y-6">
