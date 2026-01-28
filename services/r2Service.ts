@@ -7,11 +7,11 @@ import { Upload } from "@aws-sdk/lib-storage";
  * eliminando os custos de saída (egress) do Supabase Storage.
  */
 
-const R2_ACCOUNT_ID = "f143a476c77f9ae5d723ca4c1414a2a9";
-const R2_ACCESS_KEY_ID = "a111eeaec99e66fea757779d34e71e60";
-const R2_SECRET_ACCESS_KEY = "5381d724442d8e8f73aa067e1db145a33b945ee24726813166c7c2ec329d6f8d";
-const R2_BUCKET_NAME = "fairstream-media";
-const R2_PUBLIC_DOMAIN = "https://pub-99a7a23d0c59423cb2935c60315cb443.r2.dev/";
+const R2_ACCOUNT_ID = (import.meta as any).env?.VITE_R2_ACCOUNT_ID || "";
+const R2_ACCESS_KEY_ID = (import.meta as any).env?.VITE_R2_ACCESS_KEY_ID || "";
+const R2_SECRET_ACCESS_KEY = (import.meta as any).env?.VITE_R2_SECRET_ACCESS_KEY || "";
+const R2_BUCKET_NAME = (import.meta as any).env?.VITE_R2_BUCKET_NAME || "fairstream-media";
+const R2_PUBLIC_DOMAIN = (import.meta as any).env?.VITE_R2_PUBLIC_DOMAIN || "";
 
 // Inicializa o cliente S3 para o R2
 const s3Client = new S3Client({
