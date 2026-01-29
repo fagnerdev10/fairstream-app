@@ -139,7 +139,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
           if (autoPlay) {
             videoEl.muted = true;
             setIsMuted(true);
-            videoEl.play().then(() => setIsBuffering(false)).catch(() => { });
+            videoEl.play().catch(() => { });
           }
         });
       } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
@@ -147,10 +147,11 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
       }
     } else {
       videoEl.src = source;
+      videoEl.load(); // Importante para vídeos MP4 diretos
       if (autoPlay) {
         videoEl.muted = true;
         setIsMuted(true);
-        videoEl.play().then(() => setIsBuffering(false)).catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
+        videoEl.play().catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
       }
     }
 
@@ -241,6 +242,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     videoEl.addEventListener('ended', handleEnded);
     videoEl.addEventListener('waiting', handleBuffer);
     videoEl.addEventListener('playing', handleBufferEnd);
+    videoEl.addEventListener('canplay', handleBufferEnd);
     videoEl.addEventListener('play', handlePlay);
     videoEl.addEventListener('pause', handlePause);
 
@@ -250,6 +252,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
       videoEl.removeEventListener('ended', handleEnded);
       videoEl.removeEventListener('waiting', handleBuffer);
       videoEl.removeEventListener('playing', handleBufferEnd);
+      videoEl.removeEventListener('canplay', handleBufferEnd);
       videoEl.removeEventListener('play', handlePlay);
       videoEl.removeEventListener('pause', handlePause);
     };
