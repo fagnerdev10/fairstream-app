@@ -28,7 +28,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(autoPlay);
+  const [isMuted, setIsMuted] = useState(autoPlay); // Browser requires muted for autoplay
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -57,6 +57,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     return video.videoUrl;
   };
 
+  // Carregamento de Vídeo
   useEffect(() => {
     const videoEl = videoRef.current;
     if (!videoEl || isYouTube) return;
@@ -64,21 +65,27 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     const source = getSourceUrl(selectedQuality);
     const isM3U8 = source.includes('.m3u8');
 
-    setIsBuffering(true);
+    // Reset de estado ao trocar fonte
+    setIsBuffering(false); // Inicia como false para não travar visualmente antes da hora
+    setCurrentTime(0);
 
     const onPlaying = () => { setIsPlaying(true); setIsBuffering(false); };
     const onPause = () => setIsPlaying(false);
     const onWaiting = () => setIsBuffering(true);
     const onCanPlay = () => setIsBuffering(false);
     const onTimeUpdate = () => setCurrentTime(videoEl.currentTime);
-    const onDuration = () => setDuration(videoEl.duration);
+    const onDurationChange = () => setDuration(videoEl.duration);
+    const onProgress = () => {
+      if (videoEl.readyState >= 3 && isBuffering) setIsBuffering(false);
+    };
 
     videoEl.addEventListener('playing', onPlaying);
     videoEl.addEventListener('pause', onPause);
     videoEl.addEventListener('waiting', onWaiting);
     videoEl.addEventListener('canplay', onCanPlay);
     videoEl.addEventListener('timeupdate', onTimeUpdate);
-    videoEl.addEventListener('loadedmetadata', onDuration);
+    videoEl.addEventListener('loadedmetadata', onDurationChange);
+    videoEl.addEventListener('progress', onProgress);
     if (onEnded) videoEl.addEventListener('ended', onEnded);
 
     if (isM3U8 && Hls.isSupported()) {
@@ -93,9 +100,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
           if (lIndex !== -1) hls.currentLevel = lIndex;
         }
         if (autoPlay) {
-          videoEl.muted = true;
-          setIsMuted(true);
-          videoEl.play().catch(() => { });
+          videoEl.play().catch(() => {
+            console.warn("Autoplay falhou, tentando mudo...");
+            videoEl.muted = true;
+            setIsMuted(true);
+            videoEl.play().catch(() => { });
+          });
         }
       });
       hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
@@ -103,27 +113,27 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
         if (level) setCurrentResolution(`${level.height}p`);
       });
     } else {
+      // Vídeo MP4 ou Safari Nativo
       videoEl.src = source;
       videoEl.load();
       if (autoPlay) {
-        videoEl.muted = true;
-        setIsMuted(true);
-        videoEl.play().catch(() => { });
+        // Para autoplay, precisamos garantir que comece mudo se o navegador barrar
+        videoEl.play().catch(() => {
+          videoEl.muted = true;
+          setIsMuted(true);
+          videoEl.play().catch(() => { });
+        });
       }
     }
 
-    const checkReady = setInterval(() => {
-      if (videoEl.readyState >= 3 && isBuffering) setIsBuffering(false);
-    }, 1000);
-
     return () => {
-      clearInterval(checkReady);
       videoEl.removeEventListener('playing', onPlaying);
       videoEl.removeEventListener('pause', onPause);
       videoEl.removeEventListener('waiting', onWaiting);
       videoEl.removeEventListener('canplay', onCanPlay);
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
-      videoEl.removeEventListener('loadedmetadata', onDuration);
+      videoEl.removeEventListener('loadedmetadata', onDurationChange);
+      videoEl.removeEventListener('progress', onProgress);
       if (onEnded) videoEl.removeEventListener('ended', onEnded);
       if (hlsRef.current) hlsRef.current.destroy();
     };
@@ -136,25 +146,18 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
   };
 
   const toggleMute = () => {
-    if (!videoRef.current) return;
     const nextMuted = !isMuted;
-    videoRef.current.muted = nextMuted;
     setIsMuted(nextMuted);
     if (!nextMuted && volume === 0) {
       setVolume(0.5);
-      videoRef.current.volume = 0.5;
     }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
-    if (videoRef.current) {
-      videoRef.current.volume = val;
-      const nextMuted = val === 0;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-    }
+    const nextMuted = val === 0;
+    setIsMuted(nextMuted);
   };
 
   const toggleFullscreen = () => {
@@ -230,16 +233,19 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
         }}
         playsInline
         preload="auto"
+        muted={isMuted}
+        volume={volume}
       />
 
+      {/* Spinner apenas se estiver buffering E já carregou o início */}
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="w-12 h-12 border-4 border-white/20 border-t-blue-500 rounded-full animate-spin shadow-[0_0_20px_rgba(59,130,246,0.5)]" />
+          <div className="w-12 h-12 border-4 border-white/20 border-t-blue-500 rounded-full animate-spin" />
         </div>
       )}
 
       {skipFeedback.show && (
-        <div className={`absolute inset-y-0 ${skipFeedback.direction === 'right' ? 'right-0 rounded-l-full' : 'left-0 rounded-r-full'} w-1/4 bg-white/10 flex flex-col items-center justify-center z-40 duration-300 pointer-events-none`}>
+        <div className={`absolute inset-y-0 ${skipFeedback.direction === 'right' ? 'right-0 rounded-l-full' : 'left-0 rounded-r-full'} w-1/4 bg-white/10 flex flex-col items-center justify-center z-40 pointer-events-none`}>
           <div className="bg-black/40 p-4 rounded-full flex flex-col items-center gap-1 border border-white/10">
             <ChevronRight size={32} className={`text-white ${skipFeedback.direction === 'left' ? 'rotate-180' : ''}`} />
             <span className="text-xs font-bold text-white">10s</span>
@@ -253,10 +259,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
         <div className="absolute bottom-20 right-4 bg-black/95 text-white rounded-xl overflow-hidden min-w-[200px] z-[60] border border-white/10 shadow-2xl animate-fade-in">
           {!showQualityMenu ? (
             <div className="py-2">
-              <button
-                onClick={() => setShowQualityMenu(true)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/10 transition-colors"
-              >
+              <button onClick={() => setShowQualityMenu(true)} className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/10 transition-colors">
                 <div className="flex items-center gap-2 text-sm"><Settings size={16} /> Qualidade</div>
                 <div className="flex items-center gap-1 text-xs text-zinc-400">
                   {selectedQuality === 'Auto' ? `Auto (${currentResolution})` : selectedQuality} <ChevronRight size={14} />
@@ -268,7 +271,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
               <button onClick={() => setShowQualityMenu(false)} className="w-full px-4 py-2 border-b border-white/10 mb-2 text-left text-xs font-bold uppercase text-zinc-400 hover:text-white">
                 &lt; Voltar
               </button>
-              <button onClick={() => { setSelectedQuality('Auto'); setShowQualityMenu(false); setShowSettings(false); }} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 ${selectedQuality === 'Auto' ? 'text-blue-500 font-bold' : ''}`}>
+              <button key="auto" onClick={() => { setSelectedQuality('Auto'); setShowQualityMenu(false); setShowSettings(false); }} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 ${selectedQuality === 'Auto' ? 'text-blue-500 font-bold' : ''}`}>
                 {selectedQuality === 'Auto' && <Check size={14} />}
                 <span>Automático</span>
               </button>
@@ -283,7 +286,8 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
         </div>
       )}
 
-      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 md:p-6 pb-4 md:pb-6 pt-20 transition-all duration-500 z-50 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* CONTROLES */}
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 md:p-6 pb-4 md:pb-6 pt-20 transition-all duration-500 z-50 ${showControls ? 'opacity-100' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
 
         <div
           className="relative h-1.5 group/progress bg-white/10 rounded-full cursor-pointer mb-6 transition-all"
