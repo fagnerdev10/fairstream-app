@@ -137,8 +137,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
             }
           }
           if (autoPlay) {
-            videoEl.muted = true;
-            setIsMuted(true);
             videoEl.play().catch(() => { });
           }
         });
@@ -148,8 +146,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     } else {
       videoEl.src = source;
       if (autoPlay) {
-        videoEl.muted = true; // Necessário para autoplay na maioria dos browsers
-        setIsMuted(true);
         videoEl.play().catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
       }
     }
