@@ -58,7 +58,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(storedDurationSec || 0); // Initialize with stored duration
   const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(autoPlay);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -138,6 +138,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
           }
           if (autoPlay) {
             videoEl.muted = true;
+            setIsMuted(true);
             videoEl.play().catch(() => { });
           }
         });
@@ -148,6 +149,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
       videoEl.src = source;
       if (autoPlay) {
         videoEl.muted = true; // Necessário para autoplay na maioria dos browsers
+        setIsMuted(true);
         videoEl.play().catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
       }
     }
@@ -399,7 +401,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
           }
         }}
         playsInline
-        muted={autoPlay}
+        muted={isMuted}
       />
 
       {/* FEEDBACK VISUAL DE PULO (Estilo YouTube) */}
