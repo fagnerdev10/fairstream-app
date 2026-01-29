@@ -67,6 +67,8 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
   const [currentResolution, setCurrentResolution] = useState<string>('Auto');
   const [showSettings, setShowSettings] = useState(false);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [skipFeedback, setSkipFeedback] = useState<{ show: boolean, direction: 'left' | 'right', amount: number }>({ show: false, direction: 'right', amount: 10 });
+  const lastTapRef = useRef<number>(0);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -251,6 +253,43 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     };
   }, [onEnded]);
 
+  const showSkipAnimation = (direction: 'left' | 'right') => {
+    setSkipFeedback({ show: true, direction, amount: 10 });
+    setTimeout(() => setSkipFeedback(prev => ({ ...prev, show: false })), 600);
+  };
+
+  const seekRelative = (amount: number) => {
+    if (videoRef.current && !isYouTube) {
+      const newTime = Math.max(0, Math.min(duration, videoRef.current.currentTime + amount));
+      videoRef.current.currentTime = newTime;
+      showSkipAnimation(amount > 0 ? 'right' : 'left');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorar se estiver digitando em outros campos
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        seekRelative(10);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        seekRelative(-10);
+      } else if (e.key === ' ' || e.key === 'k') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.key === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [duration, isYouTube]);
+
   const togglePlay = async () => {
     if (videoRef.current) {
       if (videoRef.current.paused) {
@@ -338,10 +377,40 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
         ref={videoRef}
         className={videoClasses}
         poster={imageService.getSmartThumbnail(video, 1280)}
-        onClick={togglePlay}
+        onClick={(e) => {
+          if (window.innerWidth < 768) {
+            const now = Date.now();
+            const tapGap = now - lastTapRef.current;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const isRightSide = clickX > rect.width / 2;
+
+            if (tapGap < 300) {
+              // Double tap detected
+              seekRelative(isRightSide ? 10 : -10);
+              lastTapRef.current = 0; // Reset
+            } else {
+              lastTapRef.current = now;
+              // No mobile, single tap apenas alterna controles
+              handleMouseMove();
+            }
+          } else {
+            togglePlay();
+          }
+        }}
         playsInline
         muted={autoPlay}
       />
+
+      {/* FEEDBACK VISUAL DE PULO (Estilo YouTube) */}
+      {skipFeedback.show && (
+        <div className={`absolute inset-y-0 ${skipFeedback.direction === 'right' ? 'right-0 rounded-l-full' : 'left-0 rounded-r-full'} w-1/3 bg-white/10 flex flex-col items-center justify-center z-50 animate-pulse pointer-events-none`}>
+          <div className="bg-black/40 p-4 rounded-full flex flex-col items-center gap-1">
+            {skipFeedback.direction === 'right' ? <ChevronRight size={32} /> : <ChevronRight size={32} className="rotate-180" />}
+            <span className="text-xs font-bold text-white">10s</span>
+          </div>
+        </div>
+      )}
 
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">

@@ -75,7 +75,7 @@ const BannerOverlay: React.FC<{
               <div className="mt-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-black bg-[#FFD700] text-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Patrocinado</span>
-                  <h4 className="font-bold text-white text-sm truncate max-w-[150px]">{campaign.title}</h4>
+                  <h4 className="font-bold text-white text-sm">{campaign.title}</h4>
                 </div>
                 <a
                   href={campaign.targetUrl}
@@ -102,8 +102,8 @@ const BannerOverlay: React.FC<{
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[9px] font-black bg-[#FFD700] text-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Patrocinado</span>
           </div>
-          <h4 className="font-bold text-white text-sm md:text-lg leading-tight truncate">{campaign.title}</h4>
-          <p className={isInline ? "text-sm text-zinc-400 mt-2 line-clamp-2" : "hidden md:block text-sm text-zinc-200 mt-2 leading-relaxed"}>
+          <h4 className="font-bold text-white text-sm md:text-lg leading-tight">{campaign.title}</h4>
+          <p className={isInline ? "text-sm text-zinc-400 mt-2 whitespace-pre-wrap" : "hidden md:block text-sm text-zinc-200 mt-2 leading-relaxed"}>
             {campaign.desktopDescription || campaign.mobileDescription || "Confira agora."}
           </p>
           {!isInline && (
