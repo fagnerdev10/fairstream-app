@@ -610,7 +610,7 @@ const Watch: React.FC = () => {
 
       {/* AREA PRINCIPAL */}
       <div className={`flex-1 min-w-0 ${isFocusMode ? 'w-full flex flex-col items-center' : ''}`}>
-        <div className={`relative bg-black group/player w-full overflow-hidden rounded-xl shadow-xl transition-all duration-500 ${isFocusMode ? 'max-w-[90vw] border border-zinc-800' : ''}`}>
+        <div className={`relative bg-black group/player w-full overflow-hidden rounded-xl shadow-xl transition-all duration-500 ${isFocusMode ? 'max-w-[1400px] border border-zinc-800' : ''}`}>
           <VideoPlayer ref={playerRef} video={video} autoPlay={autoPlayEnabled} isFocusMode={isFocusMode}>
             {isFocusMode && (
               <button onClick={toggleFocusMode} className="absolute top-4 right-4 bg-black/60 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover/player:opacity-100 transition-all z-50"><Minimize2 size={24} /></button>
@@ -645,13 +645,22 @@ const Watch: React.FC = () => {
                   <Link to={`/channel/${video.creator.id}`}><img src={video.creator.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="" /></Link>
                   <div className="min-w-0">
                     <Link to={`/channel/${video.creator.id}`} className={`font-bold hover:underline block truncate ${textPrimary}`}>{video.creator.name}</Link>
-                    <p className="text-xs text-zinc-500">{formatCompactNumber(subCount)} inscritos</p>
+                    <p className="text-xs text-zinc-500">{formatCompactNumber(Number(subCount) || 0)} inscritos</p>
                   </div>
                 </div>
                 {/* BOTÃO INSCREVER (A DIREITA NO MOBILE) */}
-                <button onClick={handleSubscribe} className={`lg:ml-4 px-6 py-2 rounded-full font-bold text-sm shrink-0 transition-colors ${isSubscribed ? 'bg-zinc-800 text-zinc-300' : 'bg-white text-black hover:bg-zinc-200'}`}>
-                  {isSubscribed ? 'Inscrito' : 'Inscrever-se'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={handleSubscribe} className={`lg:ml-4 px-6 py-2 rounded-full font-bold text-sm shrink-0 transition-colors ${isSubscribed ? 'bg-zinc-800 text-zinc-300' : 'bg-white text-black hover:bg-zinc-200'}`}>
+                    {isSubscribed ? 'Inscrito' : 'Inscrever-se'}
+                  </button>
+                  {/* BOTÕES EXTRAS NO DESKTOP (Junto com o Inscrever-se) */}
+                  <div className="hidden lg:flex items-center gap-2">
+                    <button onClick={handleJoin} className={`border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${isChannelMember ? 'bg-blue-500/10' : ''}`}>
+                      {isChannelMember && <Crown size={14} />} {isChannelMember ? 'Membro Ativo' : 'Seja Membro'}
+                    </button>
+                    <button onClick={handleSupport} className="border border-zinc-700 text-white hover:bg-zinc-800 px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-colors"><DollarSign size={16} className="text-green-500" /> Apoiar</button>
+                  </div>
+                </div>
               </div>
 
               {/* BOTÕES EXTRAS (OCUPAM LINHA SEPARADA NO MOBILE) */}
@@ -665,12 +674,6 @@ const Watch: React.FC = () => {
 
             {/* BARRA DE INTERAÇÕES (DESLIZANTE NO MOBILE) */}
             <div className="flex items-center gap-2">
-              <div className="hidden lg:flex items-center gap-2 mr-2">
-                <button onClick={handleJoin} className={`border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${isChannelMember ? 'bg-blue-500/10' : ''}`}>
-                  {isChannelMember && <Crown size={14} />} {isChannelMember ? 'Membro Ativo' : 'Seja Membro'}
-                </button>
-                <button onClick={handleSupport} className="border border-zinc-700 text-white hover:bg-zinc-800 px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-colors"><DollarSign size={16} className="text-green-500" /> Apoiar</button>
-              </div>
 
               <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar w-full lg:w-auto">
                 <button onClick={handleToggleLike} className={`flex items-center gap-2 px-4 h-10 rounded-full bg-zinc-800 hover:bg-zinc-700 transition-colors shrink-0 ${hasLiked ? 'text-blue-500' : 'text-white'}`}><ThumbsUp size={18} className={hasLiked ? 'fill-current' : ''} /><span>{likesCount}</span></button>

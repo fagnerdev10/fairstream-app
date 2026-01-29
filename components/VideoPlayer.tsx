@@ -362,7 +362,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
   }
 
   // Mantém 16:9 exato e evita cortes na imagem usando object-contain
-  const containerClasses = `relative w-full aspect-video bg-black group overflow-hidden select-none transition-all flex items-center justify-center ${isFocusMode ? 'max-h-[85vh]' : ''}`;
+  const containerClasses = `relative w-full aspect-video bg-black group overflow-hidden select-none transition-all flex items-center justify-center ${isFocusMode ? 'max-h-[90vh]' : ''}`;
 
   const videoClasses = `w-full h-full object-contain cursor-pointer z-0`;
 
