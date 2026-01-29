@@ -107,7 +107,7 @@ const BannerOverlay: React.FC<{
             {campaign.desktopDescription || campaign.mobileDescription || "Confira agora."}
           </p>
           {!isInline && (
-            <p className="md:hidden text-[11px] text-zinc-300 mt-0.5 leading-tight line-clamp-2">
+            <p className="md:hidden text-[11px] text-zinc-300 mt-0.5 leading-tight">
               {campaign.mobileDescription || campaign.desktopDescription?.substring(0, 70) || "Toque para ver."}
             </p>
           )}

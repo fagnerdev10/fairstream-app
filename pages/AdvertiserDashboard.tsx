@@ -1327,19 +1327,19 @@ const AdvertiserDashboard: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-1 flex items-center gap-2">
                       <TabletSmartphone size={14} className="text-green-400" />
-                      Descrição para celular (até 200 caracteres)
+                      Descrição para celular (até 500 caracteres)
                     </label>
                     <textarea
                       value={newCampaign.mobileDescription}
                       onChange={e => setNewCampaign({ ...newCampaign, mobileDescription: e.target.value })}
-                      className={`w-full bg-zinc-950 border rounded-lg px-3 py-2 outline-none resize-none h-20 transition-colors text-white ${newCampaign.mobileDescription.length > 200
+                      className={`w-full bg-zinc-950 border rounded-lg px-3 py-2 outline-none resize-none h-20 transition-colors text-white ${newCampaign.mobileDescription.length > 500
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-zinc-700 focus:border-blue-500'
                         }`}
                       placeholder="Descrição curta e direta para telas pequenas..."
                     />
-                    <div className={`text-right text-xs mt-1 font-medium ${newCampaign.mobileDescription.length > 200 ? 'text-red-500' : 'text-zinc-500'}`}>
-                      {newCampaign.mobileDescription.length} / 200
+                    <div className={`text-right text-xs mt-1 font-medium ${newCampaign.mobileDescription.length > 500 ? 'text-red-500' : 'text-zinc-500'}`}>
+                      {newCampaign.mobileDescription.length} / 500
                     </div>
                   </div>
                 </>
