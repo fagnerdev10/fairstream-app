@@ -606,11 +606,11 @@ const Watch: React.FC = () => {
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-gray-900';
 
   return (
-    <div className={`p-0 md:p-6 mx-auto w-full flex ${isFocusMode ? 'flex-col items-center' : 'flex-col lg:flex-row gap-6 max-w-[1800px]'}`}>
+    <div className={`p-0 ${isFocusMode ? 'md:p-0' : 'md:p-6'} mx-auto w-full flex ${isFocusMode ? 'flex-col items-center bg-[#0f0f0f]' : 'flex-col lg:flex-row gap-6 max-w-[1800px]'}`}>
 
       {/* AREA PRINCIPAL */}
-      <div className={`flex-1 min-w-0 ${isFocusMode ? 'w-full flex flex-col items-center' : ''}`}>
-        <div className={`relative bg-black group/player w-full overflow-hidden rounded-xl shadow-xl transition-all duration-500 ${isFocusMode ? 'max-w-[1400px] border border-zinc-800' : ''}`}>
+      <div className={`flex-1 min-w-0 ${isFocusMode ? 'w-full flex flex-col items-center mt-0' : ''}`}>
+        <div className={`relative bg-black group/player w-full overflow-hidden shadow-xl transition-all duration-500 ${isFocusMode ? 'max-w-screen-2xl border-b border-zinc-800 rounded-none' : 'rounded-xl'}`}>
           <VideoPlayer ref={playerRef} video={video} autoPlay={autoPlayEnabled} isFocusMode={isFocusMode}>
             {isFocusMode && (
               <button onClick={toggleFocusMode} className="absolute top-4 right-4 bg-black/60 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover/player:opacity-100 transition-all z-50"><Minimize2 size={24} /></button>
@@ -650,11 +650,11 @@ const Watch: React.FC = () => {
                 </div>
                 {/* BOTÃO INSCREVER (A DIREITA NO MOBILE) */}
                 <div className="flex items-center gap-2">
-                  <button onClick={handleSubscribe} className={`lg:ml-4 px-6 py-2 rounded-full font-bold text-sm shrink-0 transition-colors ${isSubscribed ? 'bg-zinc-800 text-zinc-300' : 'bg-white text-black hover:bg-zinc-200'}`}>
+                  <button onClick={handleSubscribe} className={`px-6 py-2 rounded-full font-bold text-sm shrink-0 transition-colors ${isSubscribed ? 'bg-zinc-800 text-zinc-300' : 'bg-white text-black hover:bg-zinc-200'}`}>
                     {isSubscribed ? 'Inscrito' : 'Inscrever-se'}
                   </button>
                   {/* BOTÕES EXTRAS NO DESKTOP (Junto com o Inscrever-se) */}
-                  <div className="hidden lg:flex items-center gap-2">
+                  <div className="hidden md:flex items-center gap-2 ml-2">
                     <button onClick={handleJoin} className={`border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${isChannelMember ? 'bg-blue-500/10' : ''}`}>
                       {isChannelMember && <Crown size={14} />} {isChannelMember ? 'Membro Ativo' : 'Seja Membro'}
                     </button>
