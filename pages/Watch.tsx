@@ -560,7 +560,7 @@ const Watch: React.FC = () => {
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-gray-900';
 
   return (
-    <div className={`p-4 md:p-6 mx-auto w-full flex ${isFocusMode ? 'flex-col items-center' : 'lg:flex-row gap-6 max-w-[1800px]'}`}>
+    <div className={`p-0 md:p-6 mx-auto w-full flex flex-col lg:flex-row gap-6 max-w-[1800px]`}>
 
       {/* AREA PRINCIPAL */}
       <div className={`flex-1 min-w-0 ${isFocusMode ? 'w-full flex flex-col items-center' : ''}`}>
@@ -574,9 +574,9 @@ const Watch: React.FC = () => {
         </div>
 
         {/* INFO VÍDEO RESTAURADO */}
-        <div className={`w-full mt-4 ${isFocusMode ? 'max-w-[90vw]' : ''}`}>
+        <div className={`w-full mt-4 px-4 md:px-0 ${isFocusMode ? 'max-w-[90vw]' : ''}`}>
           <h1 className={`text-xl md:text-2xl font-bold ${textPrimary}`}>{video.title}</h1>
-          <div className="flex flex-wrap items-center justify-between mt-3 gap-4 border-b border-zinc-800/50 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mt-3 gap-4 border-b border-zinc-800/50 pb-4">
             <div className="flex items-center gap-3">
               <Link to={`/channel/${video.creator.id}`}><img src={video.creator.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="" /></Link>
               <div>
