@@ -37,16 +37,26 @@ const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdCli
   if (campaign.type === 'image') {
     return (
       <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[85%] md:w-[70%] max-w-[600px] aspect-video z-[9999] animate-fade-in group pointer-events-auto">
-        <div className="relative w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 border-white/20 hover:border-blue-500 transition-all bg-black">
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white p-1.5 rounded-full z-[10000] shadow-xl border border-white/20 transition-all"><X size={18} /></button>
-          <a href={campaign.targetUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full cursor-pointer group" onClick={(e) => onAdClick(e)}>
-            <img src={campaign.bannerImage} alt={campaign.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
-              <div className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                Visitar Site <ExternalLink size={16} />
+        <div className="relative w-full h-full">
+          {/* BOTÃO FECHAR FORA DA CAIXA COM Z-INDEX ALTÍSSIMO */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="absolute -top-4 -right-2 md:top-3 md:right-3 bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-[0_0_20px_rgba(255,0,0,0.6)] border-2 border-white transition-all transform active:scale-95"
+            title="Fechar Anúncio"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 border-white/20 hover:border-blue-500 transition-all bg-black">
+            <a href={campaign.targetUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full cursor-pointer group" onClick={(e) => onAdClick(e)}>
+              <img src={campaign.bannerImage} alt={campaign.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
+                <div className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                  Visitar Site <ExternalLink size={16} />
+                </div>
               </div>
-            </div>
-          </a>
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -54,7 +64,7 @@ const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdCli
   // Anúncio de TEXTO
   return (
     <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[90%] md:w-[600px] bg-zinc-900/98 backdrop-blur-3xl border border-white/20 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[9999] flex flex-col gap-2 md:gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 pointer-events-auto">
-      <div className="flex justify-between items-start gap-2">
+      <div className="flex justify-between items-start gap-2 relative">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[9px] font-black bg-[#FFD700] text-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Patrocinado</span>
@@ -67,11 +77,14 @@ const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdCli
             {campaign.mobileDescription || campaign.desktopDescription?.substring(0, 70) || "Toque para ver."}
           </p>
         </div>
+
+        {/* BOTÃO FECHAR POSICIONADO ESTRATEGICAMENTE NO MOBILE */}
         <button
           onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="bg-red-600/90 text-white p-1 rounded-full hover:bg-red-600 z-[10000] shadow-xl border border-white/10 flex-shrink-0"
+          className="absolute -top-3 -right-3 md:static bg-red-600 text-white w-9 h-9 md:w-8 md:h-8 rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-2xl border-2 border-white transition-all transform active:scale-95 flex-shrink-0"
+          title="Fechar Anúncio"
         >
-          <X size={14} />
+          <X size={20} />
         </button>
       </div>
 

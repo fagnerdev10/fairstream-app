@@ -112,9 +112,13 @@ const BroadcastBanner: React.FC = () => {
   );
 };
 
+import { useLocation } from 'react-router-dom';
+
 const Layout: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { theme, maintenanceMode } = useSettings();
+  const location = useLocation();
+  const isWatchPage = location.pathname.startsWith('/watch/');
   const isMaintenance = maintenanceMode;
 
   const [isCompact, setIsCompact] = useState(userPreferences.getCompactModePreference());
@@ -143,7 +147,7 @@ const Layout: React.FC = () => {
 
   if (!isLoading && isMaintenance && user?.role !== 'owner' && user?.email !== 'admin@fairstream.com') {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center p-4 text-center transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-100 text-gray-900'}`}>
+      <div className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-center transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-100 text-gray-900'}`}>
         <div className={`border p-8 rounded-2xl max-w-md shadow-2xl ${theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
           <div className="w-16 h-16 bg-yellow-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock className="text-yellow-500" size={32} />
@@ -163,8 +167,12 @@ const Layout: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {!isFocusMode && <Header />}
-      <div className={`flex ${isFocusMode ? 'pt-0' : 'pt-16'} relative`}>
+      {/* Oculta Header no mobile se for página de vídeo */}
+      <div className={`${isWatchPage ? 'hidden md:block' : 'block'}`}>
+        {!isFocusMode && <Header />}
+      </div>
+
+      <div className={`flex ${isFocusMode || isWatchPage ? 'pt-0 md:pt-16' : 'pt-16'} relative`}>
         {!isCompact && !isFocusMode && <Sidebar />}
         <main className={`flex-1 min-h-[calc(100vh-64px)] overflow-x-hidden flex flex-col ${(isCompact || isFocusMode) ? 'ml-0 w-full' : 'md:ml-64'}`}>
           <BroadcastBanner />
