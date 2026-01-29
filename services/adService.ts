@@ -296,13 +296,24 @@ export const adService = {
   },
 
   trackImpression: async (campaignId: string) => {
-    // Incrementa campanha via RPC (Solução atômica no banco)
-    const { error } = await supabase.rpc('increment_campaign_impressions', { campaign_id: campaignId });
-    if (error) {
-      console.error('[AdService] Erro ao incrementar impressões via RPC:', error);
+    try {
+      // Incrementa campanha via RPC (Solução atômica no banco)
+      const { error } = await supabase.rpc('increment_campaign_impressions', { campaign_id: campaignId });
 
-      // Fallback seguro: apenas se o RPC falhar por não existir, tentamos o update
-      // Mas o V11 do SQL já garante que o RPC existe.
+      if (error) {
+        console.warn(`[AdService] RPC increment_campaign_impressions falhou (${error.message}), usando Update Direto.`);
+
+        // Fallback: Busca e incrementa manualmente (pode ter race condition, mas garante o dado)
+        const { data: campaign } = await supabase.from('campaigns').select('impressions, spent').eq('id', campaignId).maybeSingle();
+        if (campaign) {
+          await supabase.from('campaigns').update({
+            impressions: (campaign.impressions || 0) + 1,
+            spent: (Number(campaign.spent) || 0) + 0.10
+          }).eq('id', campaignId);
+        }
+      }
+    } catch (e) {
+      console.error('[AdService] Erro ao rastrear impressão:', e);
     }
   },
 

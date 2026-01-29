@@ -167,6 +167,9 @@ const Layout: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="bg-red-600 text-white text-[10px] font-bold text-center py-0.5 sticky top-0 z-[9999] uppercase tracking-tighter">
+        D6245F8D - PROVA VISUAL V21 - ARQUIVOS LOCAIS SENDO ALTERADOS - {new Date().toLocaleDateString()}
+      </div>
       {/* Oculta Header no mobile se for página de vídeo */}
       <div className={`${isWatchPage ? 'hidden md:block' : 'block'}`}>
         {!isFocusMode && <Header />}

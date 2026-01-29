@@ -116,14 +116,31 @@ export const imageService = {
     const folder = bucket === 'profiles' ? 'avatars' : bucket;
 
     try {
-      console.log(`☁️ [ImageService] Redirecionando upload do bucket '${bucket}' para Cloudflare R2...`);
-
+      console.log(`☁️ [ImageService] Tentando upload para Cloudflare R2: ${folder}/${fileName}...`);
       const publicUrl = await r2Service.uploadFile(blob, folder, fileName);
-      if (publicUrl) return publicUrl;
-      throw new Error("R2 Upload failed");
-    } catch (error) {
-      console.error('❌ [ImageService] Erro crítico no upload para R2:', error);
-      throw error; // Não esconde mais o erro com fallbacks
+      if (publicUrl && !publicUrl.includes('blob:')) return publicUrl;
+      throw new Error("Upload R2 falhou ou retornou link inválido");
+    } catch (error: any) {
+      console.error('⚠️ [ImageService] R2 falhou, tentando fallback Supabase:', error.message);
+
+      // FALLBACK DE EMERGÊNCIA: Se R2 falhar, tenta salvar no Supabase Storage
+      try {
+        const { data, error: sbError } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, blob, { upsert: true });
+
+        if (sbError) throw sbError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+
+        console.log('✅ [ImageService] Upload concluído via Fallback Supabase:', publicUrl);
+        return publicUrl;
+      } catch (sbErr: any) {
+        console.error('❌ [ImageService] Falha TOTAL no upload (R2 e Supabase):', sbErr);
+        throw new Error("Não foi possível salvar o arquivo em nenhum provedor. Verifique sua conexão e configurações.");
+      }
     }
   }
 };

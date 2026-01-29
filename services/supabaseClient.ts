@@ -18,6 +18,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     }
 });
 
+// --- ESCUDO V9: DETECTOR DE FALHAS DE INFRAESTRUTURA ---
+
+
 // ======================================
 // TIPOS DAS TABELAS
 // ======================================

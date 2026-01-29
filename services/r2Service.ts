@@ -17,7 +17,7 @@ const R2_PUBLIC_DOMAIN = (import.meta as any).env?.VITE_R2_PUBLIC_DOMAIN || "";
 const s3Client = new S3Client({
     region: "auto",
     endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    forcePathStyle: true, // Necessário para R2 funcionar corretamente com S3 SDK no navegador
+    forcePathStyle: true, // Revertido para true: mais estável para R2 no navegador (evita erros de SSL no domínio do bucket)
     credentials: {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,

@@ -282,6 +282,13 @@ const Upload: React.FC = () => {
       setUploadProgress(0);
 
       let finalVideoUrl = previewUrl || '';
+
+      // TRAVA V7: Se finalVideoUrl ainda for um Blob (e não houver arquivo para subir), 
+      // algo deu errado no fluxo de edição ou upload.
+      if (!file && finalVideoUrl.startsWith('blob:') && !editId) {
+        throw new Error("O link temporário expirou. Por favor, selecione o arquivo novamente.");
+      }
+
       let finalThumbnail = thumbnailUrl;
       let finalSource = thumbnailSource;
 

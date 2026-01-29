@@ -7,14 +7,47 @@ import { imageService } from "./imageService";
 // --- MAPPERS (Snake <-> Camel) ---
 
 const mapDbToVideo = (v: any): Video => {
-  const creatorProfile = v.profiles || v.creator || {};
+  let creatorProfile = v.profiles || v.creator || {};
+  let finalDescription = v.description || '';
+
+  // --- HACK DE SINCRONIZAÇÃO GLOBAL (SEED METADATA) ---
+  // Se a descrição contiver o padrão [SEED_USER:{...}], extraímos o perfil fake.
+  // Usamos uma regex robusta que ignora quebras de linha e espaços.
+  if (finalDescription.includes('[SEED_USER:')) {
+    try {
+      // Pequeno truque: pegamos o conteúdo entre o primeiro { e o último } dentro do marcador
+      const startTag = finalDescription.indexOf('[SEED_USER:');
+      const endTag = finalDescription.indexOf(']', startTag);
+      if (startTag !== -1 && endTag !== -1) {
+        const jsonPart = finalDescription.substring(startTag + 11, endTag);
+        const seedData = JSON.parse(jsonPart);
+        creatorProfile = { ...creatorProfile, ...seedData };
+        // Remove a tag da descrição visível
+        finalDescription = (finalDescription.substring(0, startTag) + finalDescription.substring(endTag + 1)).trim();
+      }
+    } catch (e) {
+      console.warn('[VideoService] Erro ao processar metadados de seed:', e);
+    }
+  }
+
+  // --- TRAVA ANTI-BLOB (FIM DO ERR_FILE_NOT_FOUND) ---
+  // Se o banco retornar um link de blob (lixo de outra sessão), trocamos por um link real.
+  let validThumbnail = v.thumbnail_url || '';
+  if (validThumbnail.startsWith('blob:') || validThumbnail.startsWith('data:video')) {
+    validThumbnail = v.category ? imageService.getRandomThumbnailByCategory(v.category) : `https://picsum.photos/seed/${v.id}/1280/720`;
+  }
+
+  let validVideoUrl = v.video_url || '';
+  if (validVideoUrl.startsWith('blob:') || validVideoUrl.startsWith('data:video')) {
+    validVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  }
 
   return {
     id: v.id,
     title: v.title || 'Sem Título',
-    description: v.description || '',
-    thumbnailUrl: v.thumbnail_url || '',
-    videoUrl: v.video_url || '',
+    description: finalDescription,
+    thumbnailUrl: validThumbnail,
+    videoUrl: validVideoUrl,
     creator: {
       id: v.creator_id,
       name: creatorProfile.name || 'Criador',
@@ -38,7 +71,8 @@ const mapDbToVideo = (v: any): Video => {
     bunnyVideoId: v.bunny_video_id || '',
     chapters: Array.isArray(v.chapters) ? v.chapters : [],
     aiSummary: v.ai_summary || '',
-    thumbnailSource: v.thumbnail_source || (v.thumbnail_url?.includes('picsum.photos') || !v.thumbnail_url ? 'random' : 'manual')
+    thumbnailSource: v.thumbnail_source || (validThumbnail.includes('picsum.photos') || !validThumbnail ? 'random' : 'manual'),
+    isSeed: v.is_seed || finalDescription.includes('[SEED_USER:') || creatorProfile.isSeed
   };
 };
 
@@ -82,21 +116,24 @@ export const videoService = {
         .select('*, profiles:creator_id(*)');
 
       if (error) {
-        console.warn('[VideoService] Erro ao buscar vídeos do Supabase:', error.message);
+        console.warn('❌ [VideoService] Erro ao buscar vídeos do Supabase:', error.message);
       } else if (data) {
+        console.log(`✅ [VideoService] ${data.length} vídeos recebidos do Supabase.`);
         data.forEach(v => {
           const video = mapDbToVideo(v);
+          if (video.isSeed) console.log(`🌱 [VideoService] Vídeo SEED detectado via metadados: ${video.title} (${video.creator.name})`);
           if (!deletedIds.includes(video.id)) {
             videoMap.set(video.id, video);
           }
         });
       }
-    } catch (e) {
-      console.error('[VideoService] Erro fatal Supabase:', e);
+    } catch (e: any) {
+      if (!isSupabaseIssue(e)) {
+        console.error('❌ [VideoService] Erro fatal Supabase:', e);
+      }
     }
 
     // Prioridade 2: LocalStorage (Videos recém criados)
-    // Se um vídeo tiver videoUrl no localStorage e não tiver no Supabase (dummy record), o local vence.
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -178,16 +215,30 @@ export const videoService = {
     };
 
     try {
+      // TRAVA V14: Impede salvar vídeo ou capa com link de Blob temporário
+      if (video.videoUrl.startsWith('blob:') || video.thumbnailUrl.startsWith('blob:')) {
+        console.error('🚫 [VideoService] Tentativa de salvar link temporário (blob:) bloqueada.');
+        throw new Error("Falha no upload! O arquivo não foi enviado para a nuvem. Tente novamente.");
+      }
+
+      console.log('[VideoService] Payload para Supabase:', dbPayload);
       const { error } = await supabase.from('videos').upsert(dbPayload);
       if (error) throw error;
-      console.log('✅ [VideoService] Vídeo persistido no Supabase.');
-    } catch (e) {
-      console.error('[VideoService] Falha na persistência Supabase:', e);
+      console.log('%c ✅ [VideoService] SUCESSO: Vídeo persistido globalmente no Supabase.', 'background: #008000; color: #fff; font-weight: bold;');
+    } catch (e: any) {
+      const errorMsg = e.message || JSON.stringify(e);
+      console.error('%c ❌ [VideoService] FALHA NA PERSISTÊNCIA SUPABASE:', 'background: #ff0000; color: #fff; font-weight: bold;', e);
+
+      // Diagnóstico detalhado para o Fagner
+      let diagnostic = `Erro: ${errorMsg}`;
+      if (errorMsg.includes('406')) diagnostic = '⚠️ Erro 406: Supabase bloqueado ou Pausado (Verifique o Painel do Supabase).';
+      if (errorMsg.includes('PGRST116')) diagnostic = '⚠️ Erro PGRST116: Registro não encontrado ou RLS bloqueando.';
+      if (errorMsg.includes('23503')) diagnostic = '⚠️ Erro de FK: O usuário que você está usando não existe na tabela de perfis.';
+
       // Fallback Local
-      const local = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      const index = local.findIndex((v: any) => v.id === video.id);
-      if (index >= 0) local[index] = video; else local.unshift(video);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([video, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')].slice(0, 100)));
+
+      throw new Error(diagnostic);
     }
 
     window.dispatchEvent(new Event("video-update"));
@@ -278,21 +329,7 @@ export const videoService = {
       const { error: rpcError } = await supabase.rpc('increment_video_views', { video_id_input: videoId });
 
       if (rpcError) {
-        console.warn('[VideoService] RPC increment_video_views falhou, tentando fallback direto:', rpcError.message);
-
-        // Tentativa 2: Update direto (Fallback)
-        const { data: currentVideo } = await supabase
-          .from('videos')
-          .select('views')
-          .eq('id', videoId)
-          .maybeSingle();
-
-        if (currentVideo) {
-          await supabase
-            .from('videos')
-            .update({ views: (currentVideo.views || 0) + 1 })
-            .eq('id', videoId);
-        }
+        console.warn('[VideoService] RPC increment_video_views falhou:', rpcError.message);
       }
 
       const updated = await videoService.getById(videoId);

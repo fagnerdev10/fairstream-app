@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseIssue } from './supabaseClient';
 
 export interface PlatformSettings {
     asaasKey: string;
@@ -41,7 +41,8 @@ export const platformSettingsService = {
 
             if (error) {
                 console.error('Erro ao buscar platform_settings:', error);
-                // Fallback para localStorage individual (transição) ou padrão
+
+                // Fallback robusto para localStorage ou padrão
                 return {
                     asaasKey: localStorage.getItem('fairstream_asaas_key') || '',
                     asaasWalletId: localStorage.getItem('fairstream_asaas_wallet_id') || '',
