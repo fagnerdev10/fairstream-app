@@ -137,7 +137,9 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
             }
           }
           if (autoPlay) {
-            videoEl.play().catch(() => { });
+            videoEl.muted = true;
+            setIsMuted(true);
+            videoEl.play().then(() => setIsBuffering(false)).catch(() => { });
           }
         });
       } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
@@ -146,7 +148,9 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ video, autoP
     } else {
       videoEl.src = source;
       if (autoPlay) {
-        videoEl.play().catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
+        videoEl.muted = true;
+        setIsMuted(true);
+        videoEl.play().then(() => setIsBuffering(false)).catch(err => console.warn('[VideoPlayer] Autoplay falhou:', err));
       }
     }
 
