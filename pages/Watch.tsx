@@ -33,58 +33,92 @@ const REPORT_REASONS = [
 ];
 
 // Banner overlay para anúncios de ANUNCIANTES em vídeos (location='video')
-const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdClick: (e?: React.MouseEvent) => void }> = ({ campaign, onClose, onAdClick }) => {
+const BannerOverlay: React.FC<{
+  campaign: Campaign;
+  onClose: () => void;
+  onAdClick: (e?: React.MouseEvent) => void;
+  isInline?: boolean;
+}> = ({ campaign, onClose, onAdClick, isInline }) => {
+  const containerClasses = isInline
+    ? "relative w-full mb-4 animate-fade-in pointer-events-auto"
+    : "absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[85%] md:w-[70%] max-w-[600px] aspect-video z-[9999] animate-fade-in group pointer-events-auto";
+
+  const boxClasses = isInline
+    ? "bg-zinc-900 border border-zinc-800 rounded-xl p-3 shadow-lg"
+    : "relative w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 border-white/20 hover:border-blue-500 transition-all bg-black";
+
   if (campaign.type === 'image') {
     return (
-      <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[85%] md:w-[70%] max-w-[600px] aspect-video z-[9999] animate-fade-in group pointer-events-auto">
-        <div className="relative w-full h-full">
-          {/* BOTÃO FECHAR FORA DA CAIXA COM Z-INDEX ALTÍSSIMO */}
+      <div className={containerClasses}>
+        <div className={isInline ? "relative" : "relative w-full h-full"}>
+          {/* BOTÃO FECHAR */}
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className="absolute -top-4 -right-2 md:top-3 md:right-3 bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-[0_0_20px_rgba(255,0,0,0.6)] border-2 border-white transition-all transform active:scale-95"
+            className={`absolute ${isInline ? '-top-2 -right-2' : '-top-4 -right-2 md:top-3 md:right-3'} bg-red-600 text-white ${isInline ? 'w-8 h-8' : 'w-10 h-10 md:w-10 md:h-10'} rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-lg border-2 border-white transition-all transform active:scale-95`}
             title="Fechar Anúncio"
           >
-            <X size={24} />
+            <X size={isInline ? 18 : 24} />
           </button>
 
-          <div className="w-full h-full rounded-xl md:rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 border-white/20 hover:border-blue-500 transition-all bg-black">
+          <div className={boxClasses}>
             <a href={campaign.targetUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full cursor-pointer group" onClick={(e) => onAdClick(e)}>
-              <img src={campaign.bannerImage} alt={campaign.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
-                <div className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                  Visitar Site <ExternalLink size={16} />
+              <img src={campaign.bannerImage} alt={campaign.title} className={isInline ? "w-full h-auto rounded-lg" : "w-full h-full object-cover"} />
+              {!isInline && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
+                  <div className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                    Visitar Site <ExternalLink size={16} />
+                  </div>
                 </div>
-              </div>
+              )}
             </a>
+            {isInline && (
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black bg-[#FFD700] text-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Patrocinado</span>
+                  <h4 className="font-bold text-white text-sm truncate max-w-[150px]">{campaign.title}</h4>
+                </div>
+                <a
+                  href={campaign.targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold text-white shrink-0"
+                  onClick={(e) => onAdClick(e)}
+                >
+                  Visitar Site
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
     );
   }
+
   // Anúncio de TEXTO
   return (
-    <div className="absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[90%] md:w-[600px] bg-zinc-900/98 backdrop-blur-3xl border border-white/20 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[9999] flex flex-col gap-2 md:gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 pointer-events-auto">
+    <div className={isInline ? "relative w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4" : "absolute bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 w-[95%] sm:w-[90%] md:w-[600px] bg-zinc-900/98 backdrop-blur-3xl border border-white/20 p-3 md:p-6 rounded-xl md:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[9999] flex flex-col gap-2 md:gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 pointer-events-auto"}>
       <div className="flex justify-between items-start gap-2 relative">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[9px] font-black bg-[#FFD700] text-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Patrocinado</span>
           </div>
           <h4 className="font-bold text-white text-sm md:text-lg leading-tight truncate">{campaign.title}</h4>
-          <p className="hidden md:block text-sm text-zinc-200 mt-2 leading-relaxed">
-            {campaign.desktopDescription || "Confira agora."}
+          <p className={isInline ? "text-sm text-zinc-400 mt-2 line-clamp-2" : "hidden md:block text-sm text-zinc-200 mt-2 leading-relaxed"}>
+            {campaign.desktopDescription || campaign.mobileDescription || "Confira agora."}
           </p>
-          <p className="md:hidden text-[11px] text-zinc-300 mt-0.5 leading-tight line-clamp-2">
-            {campaign.mobileDescription || campaign.desktopDescription?.substring(0, 70) || "Toque para ver."}
-          </p>
+          {!isInline && (
+            <p className="md:hidden text-[11px] text-zinc-300 mt-0.5 leading-tight line-clamp-2">
+              {campaign.mobileDescription || campaign.desktopDescription?.substring(0, 70) || "Toque para ver."}
+            </p>
+          )}
         </div>
 
-        {/* BOTÃO FECHAR POSICIONADO ESTRATEGICAMENTE NO MOBILE */}
         <button
           onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="absolute -top-3 -right-3 md:static bg-red-600 text-white w-9 h-9 md:w-8 md:h-8 rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-2xl border-2 border-white transition-all transform active:scale-95 flex-shrink-0"
+          className={isInline ? "bg-zinc-800 hover:bg-zinc-700 text-white p-1.5 rounded-full" : "absolute -top-3 -right-3 md:static bg-red-600 text-white w-9 h-9 md:w-8 md:h-8 rounded-full flex items-center justify-center hover:bg-red-700 z-[10001] shadow-2xl border-2 border-white transition-all transform active:scale-95 flex-shrink-0"}
           title="Fechar Anúncio"
         >
-          <X size={20} />
+          <X size={isInline ? 16 : 20} />
         </button>
       </div>
 
@@ -92,7 +126,7 @@ const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdCli
         href={campaign.targetUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white text-center text-xs md:text-sm font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all shadow-lg active:scale-[0.98] group"
+        className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white text-center text-xs md:text-sm font-bold py-2 md:py-3 rounded-lg md:rounded-xl transition-all shadow-lg active:scale-[0.98] group mt-2"
         onClick={(e) => onAdClick(e)}
       >
         Visitar Site <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -581,8 +615,23 @@ const Watch: React.FC = () => {
             {isFocusMode && (
               <button onClick={toggleFocusMode} className="absolute top-4 right-4 bg-black/60 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover/player:opacity-100 transition-all z-50"><Minimize2 size={24} /></button>
             )}
-            {activeCampaign && <BannerOverlay campaign={activeCampaign} onClose={() => setActiveCampaign(null)} onAdClick={onAdClick} />}
+            {/* NO PC CONTINUA OVERLAY, NO MOBILE É OCULTO DENTRO DO PLAYER */}
+            <div className="hidden md:block">
+              {activeCampaign && <BannerOverlay campaign={activeCampaign} onClose={() => setActiveCampaign(null)} onAdClick={onAdClick} />}
+            </div>
           </VideoPlayer>
+        </div>
+
+        {/* NO MOBILE, O ANÚNCIO DESCE PARA ABAIXO DO VÍDEO CONFORME PEDIDO (ESTILO PURE VIDEO) */}
+        <div className="block md:hidden px-4 mt-4">
+          {activeCampaign && (
+            <BannerOverlay
+              campaign={activeCampaign}
+              onClose={() => setActiveCampaign(null)}
+              onAdClick={onAdClick}
+              isInline={true}
+            />
+          )}
         </div>
 
         {/* INFO VÍDEO RESTAURADO */}
