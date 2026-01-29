@@ -36,9 +36,9 @@ const REPORT_REASONS = [
 const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdClick: (e?: React.MouseEvent) => void }> = ({ campaign, onClose, onAdClick }) => {
   if (campaign.type === 'image') {
     return (
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[70%] max-w-[600px] aspect-video z-[9999] animate-fade-in group pointer-events-auto">
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[90%] md:w-[70%] max-w-[600px] aspect-video z-[9999] animate-fade-in group pointer-events-auto">
         <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border-2 border-white/20 hover:border-blue-500 transition-all bg-black">
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-3 right-3 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 z-[10000] shadow-xl transition-all hover:scale-110 active:scale-90"><X size={16} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute -top-2 -right-2 bg-red-600 text-white p-2.5 rounded-full hover:bg-red-700 z-[10000] shadow-xl transition-all hover:scale-110 active:scale-90 border-2 border-white/20"><X size={20} /></button>
           <a href={campaign.targetUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full cursor-pointer group" onClick={(e) => onAdClick(e)}>
             <img src={campaign.bannerImage} alt={campaign.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
@@ -63,15 +63,18 @@ const BannerOverlay: React.FC<{ campaign: Campaign; onClose: () => void; onAdCli
             <span className="text-xs font-black bg-[#FFD700] text-black px-2 py-1 rounded border border-white/10 uppercase tracking-tighter">Patrocinado</span>
           </div>
           <h4 className="font-bold text-white text-lg leading-tight">{campaign.title}</h4>
-          <p className="text-sm text-zinc-200 mt-2 leading-relaxed whitespace-pre-wrap">
-            {campaign.desktopDescription || campaign.mobileDescription || "Confira esta oferta especial para você."}
+          <p className="hidden md:block text-sm text-zinc-200 mt-2 leading-relaxed whitespace-pre-wrap">
+            {campaign.desktopDescription || "Confira esta oferta especial para você."}
+          </p>
+          <p className="md:hidden text-xs text-zinc-200 mt-2 leading-tight line-clamp-3">
+            {campaign.mobileDescription || campaign.desktopDescription?.substring(0, 150) || "Confira esta oferta especial."}
           </p>
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="text-zinc-500 hover:text-white p-1 hover:bg-white/10 rounded-full transition-all flex-shrink-0"
+          className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 z-[10000] shadow-xl transition-all hover:scale-110 active:scale-90 flex-shrink-0"
         >
-          <X size={18} />
+          <X size={20} />
         </button>
       </div>
 
@@ -587,7 +590,7 @@ const Watch: React.FC = () => {
               <button onClick={handleJoin} className={`border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${isChannelMember ? 'bg-blue-500/10' : ''}`}>
                 {isChannelMember && <Crown size={14} />} {isChannelMember ? 'Membro Ativo' : 'Seja Membro'}
               </button>
-              <button onClick={handleSupport} className="border border-zinc-700 text-white hover:bg-zinc-800 px-4 py-2 rounded-full font-bold flex items-center gap-2 hidden md:flex transition-colors"><DollarSign size={16} className="text-green-500" /> Apoiar</button>
+              <button onClick={handleSupport} className="border border-zinc-700 text-white hover:bg-zinc-800 px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-colors shrink-0"><DollarSign size={16} className="text-green-500" /> Apoiar</button>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={handleToggleLike} className={`flex items-center gap-2 px-4 h-10 rounded-full bg-zinc-800 hover:bg-zinc-700 transition-colors ${hasLiked ? 'text-blue-500' : 'text-white'}`}><ThumbsUp size={18} className={hasLiked ? 'fill-current' : ''} /><span>{likesCount}</span></button>
