@@ -10,6 +10,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import * as bunnyService from '../services/bunnyService';
 import { imageService } from '../services/imageService';
 import { r2Service } from '../services/r2Service';
+import { channelService } from '../services/channelService';
 
 const SUGGESTED_TAGS = [
   "Religião e Espiritualismo", "Tecnologia", "Educação", "Vlogs", "Games", "Música", "Natureza", "Finanças"
@@ -50,11 +51,16 @@ const Upload: React.FC = () => {
 
   // Video Duration
   const [formattedDuration, setFormattedDuration] = useState('0:00');
+  const [durationInSeconds, setDurationInSeconds] = useState(0);
   const [captureTime, setCaptureTime] = useState(0);
+  const [subscriberCount, setSubscriberCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/auth');
+    } else if (user) {
+      // Carregar contagem de inscritos
+      channelService.getSubscriberCount(user.id).then(setSubscriberCount);
     }
   }, [user, isLoading, navigate]);
 
@@ -106,6 +112,13 @@ const Upload: React.FC = () => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+
+      // Validação de tipo de arquivo
+      if (!selectedFile.type.startsWith('video/')) {
+        alert("Por favor, selecione um arquivo de vídeo válido.");
+        return;
+      }
+
       setFile(selectedFile);
       setUploadProgress(0);
 
@@ -115,6 +128,15 @@ const Upload: React.FC = () => {
       // Cria preview imediato com Blob URL (apenas para visualização local)
       const blobUrl = URL.createObjectURL(selectedFile);
       setPreviewUrl(blobUrl);
+
+      // Obter duração para validação de Tier
+      const tempVideo = document.createElement('video');
+      tempVideo.preload = 'metadata';
+      tempVideo.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(tempVideo.src);
+        setDurationInSeconds(tempVideo.duration);
+      };
+      tempVideo.src = blobUrl;
     }
   };
 
@@ -216,12 +238,30 @@ const Upload: React.FC = () => {
     }
   };
 
+  const getChannelTier = (count: number) => {
+    if (count >= 500000) return { maxMinutes: 60, quality: '1080p', label: 'Lendário (500k+)' };
+    if (count >= 300000) return { maxMinutes: 60, quality: '720p', label: 'Estratega (300k+)' };
+    if (count >= 50000) return { maxMinutes: 40, quality: '1080p', label: 'Influenciador (50k+)' };
+    if (count >= 10000) return { maxMinutes: 40, quality: '720p', label: 'Consolidado (10k+)' };
+    return { maxMinutes: 15, quality: '720p', label: 'Iniciante' };
+  };
+
+  const currentTier = getChannelTier(subscriberCount);
+
   // Validates inputs and triggers copyright modal
   const handlePrePublish = () => {
     if (!editId && !file && !previewUrl) {
       alert("Por favor, selecione um arquivo de vídeo para fazer upload.");
       return;
     }
+
+    // Validação de Duração por Tier
+    const durationMinutes = durationInSeconds / 60;
+    if (durationMinutes > currentTier.maxMinutes) {
+      alert(`Ops! Seu nível atual (${currentTier.label}) permite vídeos de até ${currentTier.maxMinutes} minutos. Seu vídeo tem ${Math.floor(durationMinutes)} minutos. Continue crescendo para desbloquear mais tempo!`);
+      return;
+    }
+
     if (!title.trim()) {
       alert("O vídeo precisa de um título.");
       return;
@@ -366,7 +406,25 @@ const Upload: React.FC = () => {
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto pb-40">
-      <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>{editId ? 'Editar Vídeo' : 'Upload de Estúdio'}</h1>
+      <div className={`text-2xl font-bold mb-2 ${textPrimary}`}>{editId ? 'Editar Vídeo' : 'Upload de Estúdio'}</div>
+
+      {/* Tier Status Badge */}
+      <div className={`mb-6 p-4 rounded-xl border flex items-center justify-between ${theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-blue-50 border-blue-100'}`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${subscriberCount >= 50000 ? 'bg-purple-500' : 'bg-blue-500'} text-white`}>
+            {subscriberCount >= 50000 ? <Sparkles size={20} /> : <UploadIcon size={20} />}
+          </div>
+          <div>
+            <div className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-900'}`}>Nível: {currentTier.label}</div>
+            <div className="text-xs text-zinc-500">{subscriberCount.toLocaleString()} inscritos • Limite: {currentTier.maxMinutes} min • Qualidade recomendada: {currentTier.quality}</div>
+          </div>
+        </div>
+        <div className="hidden md:block">
+          {subscriberCount < 500000 && (
+            <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Próximo Nível em breve</div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* COLUNA ESQUERDA: VÍDEO & CAPA */}
