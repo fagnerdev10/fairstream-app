@@ -3,9 +3,9 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 async function testR2() {
     const credentials = {
-        accountId: "99a7a23d0c59423cb2935c60315cb443", // Hash da URL pública
-        accessKeyId: "f44f6fcf825b7cecd591244031956559",
-        secretAccessKey: "44439c36ecaf37e6f6a7d519a4f49be3e3dc05e04ae424f1146312cd029f6f69",
+        accountId: process.env.VITE_R2_ACCOUNT_ID || "",
+        accessKeyId: process.env.VITE_R2_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.VITE_R2_SECRET_ACCESS_KEY || "",
         bucketName: "fairstream-media"
     };
 

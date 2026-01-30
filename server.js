@@ -14,10 +14,10 @@ app.use(bodyParser.json());
 
 // CONFIGURAÇÃO OFICIAL FAIR STREAM
 const MP_CONFIG = {
-    clientId: "1816534017966802",
-    clientSecret: "sPC2g3zjaz85OpRDMXg4Q9e1TTVxR18v",
-    publicKey: "APP_USR-50a9006b-ab9d-4406-ba28-e5002e14bd14",
-    platformAccessToken: "APP_USR-1816534017966802-123020-7ddfccc1944e45fef38bcb26647ae32f-3102834096"
+    clientId: process.env.MP_CLIENT_ID || "",
+    clientSecret: process.env.MP_CLIENT_SECRET || "",
+    publicKey: process.env.MP_PUBLIC_KEY || "",
+    platformAccessToken: process.env.MP_ACCESS_TOKEN || ""
 };
 
 console.log("🚀 Servidor FairStream REAL Iniciado na porta", PORT);
