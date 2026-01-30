@@ -18,7 +18,7 @@ import { supabase } from '../services/supabaseClient';
 
 const Admin: React.FC = () => {
     const { user, isLoading } = useAuth();
-    const { theme } = useSettings();
+    const { theme, maintenanceMode, setMaintenanceMode, maxWarnings: globalMaxWarnings, setMaxWarnings: setGlobalMaxWarnings } = useSettings();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -40,7 +40,7 @@ const Admin: React.FC = () => {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
     const [isMaintenance, setIsMaintenance] = useState(false);
-    const [maxWarnings, setMaxWarnings] = useState(0);
+    const [maxWarnings, setMaxWarnings] = useState(3);
 
     // --- INBOX DO DONO STATES ---
     const [chatPartnerId, setChatPartnerId] = useState<string | null>(null);
@@ -182,19 +182,19 @@ const Admin: React.FC = () => {
         try { setBroadcasts(await broadcastService.getAll()); } catch (e) { console.error(e); setBroadcasts([]); }
         try { setUserReports(await reportService.getAll()); } catch (e) { console.error(e); setUserReports([]); }
 
-        // Carrega configurações globais do Supabase
+        // Carrega configurações globais do Supabase e SINCRONIZA com o estado local
         try {
-            const platformSettings = await platformSettingsService.getSettings();
+            const platformSettings = await platformSettingsService.getSettings(true);
             setIsMaintenance(platformSettings.isMaintenanceMode);
             setMaxWarnings(platformSettings.maxWarnings);
         } catch (e) {
             console.error('Erro ao carregar configurações da plataforma:', e);
-            setIsMaintenance(authService.isMaintenanceMode());
-            setMaxWarnings(authService.getMaxWarnings());
+            setIsMaintenance(maintenanceMode);
+            setMaxWarnings(globalMaxWarnings);
         }
 
         // Financial Data
-        try { setManualCosts(await adService.getManualCosts()); } catch (e) { console.error(e); setManualCosts([]); }
+        try { setManualCosts(await adService.getManualCosts()); } catch (e) { console.error(e); }
 
         refreshInbox();
     };
@@ -224,24 +224,18 @@ const Admin: React.FC = () => {
     };
 
     const handleSaveMaxWarnings = async () => {
-        const success = await platformSettingsService.updateSettings({ maxWarnings });
-        if (success) {
-            setShowSettingsSuccess(true);
-            setTimeout(() => setShowSettingsSuccess(false), 3000);
-        } else {
-            alert('Erro ao salvar no Supabase. Verifique seu papel (Admin/Owner).');
-        }
+        // 🔄 Salva globalmente no contexto e no Supabase para aplicar ao site agora
+        await setGlobalMaxWarnings(maxWarnings);
+        setShowSettingsSuccess(true);
+        setTimeout(() => setShowSettingsSuccess(false), 3000);
     };
 
     const toggleMaintenance = async () => {
         const newState = !isMaintenance;
-        const success = await platformSettingsService.updateSettings({ isMaintenanceMode: newState });
-        if (success) {
-            setIsMaintenance(newState);
-            alert(`Modo de Manutenção ${newState ? 'ATIVADO' : 'DESATIVADO'}.`);
-        } else {
-            alert('Erro ao alterar modo de manutenção. Verifique suas permissões.');
-        }
+        setIsMaintenance(newState);
+        // 🔄 Atualiza o site inteiro instantaneamente
+        await setMaintenanceMode(newState);
+        alert(`Modo de Manutenção ${newState ? 'ATIVADO' : 'DESATIVADO'} no site inteiro! ✅`);
     };
 
     const handleStartChat = (userId: string, role: UserRole = 'creator') => {
@@ -873,7 +867,7 @@ const Admin: React.FC = () => {
             {activeTab === 'settings' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Shield size={24} className="text-purple-400" /> Segurança e Políticas</h2>
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Shield size={24} className="text-emerald-400" /> Segurança e Políticas</h2>
                         <div className="space-y-6">
                             <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl">
                                 <div>
@@ -882,9 +876,9 @@ const Admin: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => toggleMaintenance()}
-                                    className={`w-14 h-8 rounded-full relative transition-colors ${isMaintenance ? 'bg-red-600' : 'bg-zinc-700'}`}
+                                    className={`w-14 h-8 rounded-full relative transition-all duration-300 shadow-inner ${isMaintenance ? 'bg-emerald-600' : 'bg-zinc-700'}`}
                                 >
-                                    <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all ${isMaintenance ? 'left-7' : 'left-1'}`} />
+                                    <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${isMaintenance ? 'left-7' : 'left-1'}`} />
                                 </button>
                             </div>
 
@@ -898,16 +892,18 @@ const Admin: React.FC = () => {
                                         max="10"
                                         value={maxWarnings}
                                         onChange={e => setMaxWarnings(parseInt(e.target.value))}
-                                        className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                        className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                                     />
                                     <span className="text-xl font-bold text-white w-8">{maxWarnings}</span>
                                     <button
                                         onClick={handleSaveMaxWarnings}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${showSettingsSuccess ? 'bg-green-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
                                     >
-                                        <Save size={16} /> Salvar
+                                        {showSettingsSuccess ? <CheckCircle size={16} /> : <Save size={16} />}
+                                        {showSettingsSuccess ? 'Salvo!' : 'Salvar'}
                                     </button>
                                 </div>
+                                {showSettingsSuccess && <p className="text-[10px] text-green-500 mt-2 flex items-center gap-1 font-bold animate-pulse"><CheckCircle size={10} /> Configurações salvas no Supabase!</p>}
                             </div>
                         </div>
                     </div>

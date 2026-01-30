@@ -147,3 +147,13 @@ export const signOut = async () => {
 };
 
 console.log('✅ Supabase configurado:', supabaseUrl);
+
+// Utilitário para verificar erros do Supabase
+export const isSupabaseIssue = (error: any): boolean => {
+    return !!error?.code || !!error?.message;
+};
+
+// Utilitário para verificar erros do Supabase
+export const isSupabaseIssue = (error: any): boolean => {
+    return error?.code || error?.message;
+};
