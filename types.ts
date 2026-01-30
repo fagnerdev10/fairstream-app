@@ -330,8 +330,10 @@ export interface AdvertiserProfile {
   standardImpressions: number;
   homepageImpressions: number;
   plan: AdPlanType;
+  cpfCnpj?: string;
   apiKeys?: ApiKey[];
 }
+
 
 // --- Conversion API Types ---
 

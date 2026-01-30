@@ -15,17 +15,17 @@ export const paymentService = {
    * Transforma o status de 'pending_payment' para 'waiting_approval'.
    */
   processCampaignPayment: async (
-    campaign: Campaign, 
+    campaign: Campaign,
     method: 'pix' | 'credit_card',
     advertiser: AdvertiserProfile
   ): Promise<PaymentResponse> => {
     console.log(`[PaymentService] Iniciando processamento para campanha: ${campaign.id}`);
 
-    // Simulação de delay de rede do Mercado Pago
+    // Simulação de delay de rede
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Lógica de sucesso (Simulada)
-    const isSuccess = true; 
+    const isSuccess = true;
 
     if (isSuccess) {
       // 1. Registra a transação financeira no sistema existente
@@ -39,7 +39,7 @@ export const paymentService = {
         date: new Date().toISOString(),
         description: `Pagamento de Campanha: ${campaign.title}`
       };
-      
+
       adService.addTransaction(transaction);
 
       // 2. Atualiza o status da campanha para a fila de aprovação

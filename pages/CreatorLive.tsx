@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { Save, Radio, Youtube, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/authService';
 
 const CreatorLive: React.FC = () => {
   const { user } = useAuth();

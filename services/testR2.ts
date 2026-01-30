@@ -7,7 +7,7 @@ export const testR2Connection = async () => {
     console.log("🚀 [TestR2] Iniciando teste de conexão...");
     const testBlob = new Blob(["FairStream R2 Test"], { type: 'text/plain' });
     try {
-        const url = await r2Service.uploadFile(testBlob, 'system_test', `test_${Date.now()}.txt`);
+        const url = await r2Service.uploadFile(testBlob as unknown as File, `system_test/test_${Date.now()}.txt`);
         console.log("✅ [TestR2] SUCESSO! Arquivo enviado:", url);
         return true;
     } catch (error: any) {

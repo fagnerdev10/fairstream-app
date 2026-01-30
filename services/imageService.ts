@@ -117,7 +117,7 @@ export const imageService = {
 
     try {
       console.log(`☁️ [ImageService] Tentando upload para Cloudflare R2: ${folder}/${fileName}...`);
-      const publicUrl = await r2Service.uploadFile(blob, folder, fileName);
+      const publicUrl = await r2Service.uploadFile(blob as File, `${folder}/${fileName}`);
       if (publicUrl && !publicUrl.includes('blob:')) return publicUrl;
       throw new Error("Upload R2 falhou ou retornou link inválido");
     } catch (error: any) {

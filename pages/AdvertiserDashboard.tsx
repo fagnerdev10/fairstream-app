@@ -4,14 +4,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { MOCK_CONVERSIONS } from '../services/mockData';
-import { Plus, Layout, DollarSign, MousePointer, Eye, Activity, RefreshCw, Lock, Code, Copy, MessageSquare, Monitor, TabletSmartphone, Image, Type, Upload, Trash2, PauseCircle, PlayCircle, Ban, Filter, Loader2, AlertCircle, AlertTriangle, X, Shield, Zap, Star, Package, XCircle, CheckCircle, Crown, ShoppingCart, Calculator, Send, Video, Home, Clock, ArrowRight, ExternalLink, Share2, Sparkles } from 'lucide-react';
+import { Plus, Layout, DollarSign, MousePointer, Eye, Activity, RefreshCw, Lock, MessageSquare, Monitor, Image, Type, Upload, Trash2, PauseCircle, PlayCircle, Ban, Filter, Loader2, AlertCircle, AlertTriangle, X, Shield, Zap, Star, Package, XCircle, CheckCircle, Crown, ShoppingCart, Calculator, Send, Video, Home, Clock, ArrowRight, ExternalLink, Share2, Sparkles } from 'lucide-react';
 import { Campaign, AdStatus, AdPlanType, ConversionEvent, Transaction, PaymentMethod, AdvertiserProfile, Message, CampaignType, AdLocation } from '../types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { adService, TieredPricing } from '../services/adService';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { messageService } from '../services/messageService';
-import { mercadoPagoService } from '../services/mercadoPagoService';
+
 import { imageService } from '../services/imageService';
 
 const CATEGORIES = [
@@ -501,13 +501,13 @@ const AdvertiserDashboard: React.FC = () => {
     }
   };
 
-  // --- SIMULAÇÃO DE PAGAMENTO DE CAMPANHA (MERCADO PAGO) ---
+  // --- SIMULAÇÃO DE PAGAMENTO DE CAMPANHA (Asaas / Pix) ---
   const handlePayCampaign = () => {
     if (!showCampaignPaymentModal) return;
 
     setIsProcessingPayment(true);
 
-    // Simula webhook do Mercado Pago
+    // Simula confirmação de pagamento
     setTimeout(async () => {
       setIsProcessingPayment(false);
 
@@ -519,11 +519,11 @@ const AdvertiserDashboard: React.FC = () => {
         id: `tx_pay_cmp_${Date.now()}`,
         advertiserId: advertiser.id,
         amount: showCampaignPaymentModal.budget,
-        method: 'credit_card', // Assumindo CC para simplificar simulação
+        method: 'pix',
         status: 'completed',
         type: 'spend',
         date: new Date().toISOString(),
-        description: `Pagamento Campanha: ${showCampaignPaymentModal.title} (Via Mercado Pago)`
+        description: `Pagamento Campanha: ${showCampaignPaymentModal.title} (Via Plataforma)`
       };
       await adService.addTransaction(tx);
       setTransactions(prev => [tx, ...prev]);
@@ -1234,8 +1234,8 @@ const AdvertiserDashboard: React.FC = () => {
             {isProcessingPayment ? (
               <div className="py-8 flex flex-col items-center">
                 <Loader2 className="animate-spin text-blue-500 mb-4" size={48} />
-                <p className="font-bold text-white">Processando no Mercado Pago...</p>
-                <p className="text-xs text-zinc-500">Aguardando confirmação do webhook</p>
+                <p className="font-bold text-white">Processando pagamento...</p>
+                <p className="text-xs text-zinc-500">Aguardando confirmação do servidor</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1243,7 +1243,7 @@ const AdvertiserDashboard: React.FC = () => {
                   onClick={handlePayCampaign}
                   className="w-full bg-[#009EE3] hover:bg-[#008CC9] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
-                  <span className="font-bold">Pagar com Mercado Pago</span>
+                  <span className="font-bold">Pagar com PIX / Asaas</span>
                 </button>
                 <p className="text-xs text-zinc-500">
                   Ao confirmar, sua campanha será enviada para aprovação da administração.

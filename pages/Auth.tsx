@@ -9,7 +9,7 @@ import { supabaseAuthService } from '../services/supabaseAuthService';
 import { useSettings } from '../contexts/SettingsContext';
 
 // Seleciona o serviço de auth baseado na configuração
-const auth = USE_SUPABASE_AUTH ? supabaseAuthService : authService;
+const auth: any = USE_SUPABASE_AUTH ? supabaseAuthService : authService;
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
