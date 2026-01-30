@@ -6,8 +6,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Credenciais do Supabase (Carregadas de variáveis de ambiente)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://pervmfsykzpyztvfoiir.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcnZtZnN5a3pweXp0dmZvaWlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODczNzQsImV4cCI6MjA4NDE2MzM3NH0.U3e47h2CUg8mBtA-ZSD-dufYG5uD2l-cI8FRalfYOaE';
 
 // Cria o cliente Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
