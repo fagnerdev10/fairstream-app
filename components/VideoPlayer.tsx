@@ -38,7 +38,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(true); // Sempre começa mudo para garantir autoplay
+  const [isMuted, setIsMuted] = useState(false); // V49: Inicia com som ativado
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
 
@@ -67,7 +67,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const v = videoRef.current;
     if (!v || isYouTube) return;
 
-    v.muted = true;
+    // V49: Não forçamos mudo. Deixamos o hardware tentar o áudio real.
     v.volume = 1.0;
 
     const start = () => {
@@ -78,11 +78,25 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         hls.loadSource(video.videoUrl);
         hls.attachMedia(v);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (autoPlay) v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+          // V49: Tenta play direto com áudio
+          if (autoPlay) v.play().then(() => {
+            setIsPlaying(true);
+            setIsMuted(false);
+          }).catch(() => {
+            // Se falhar (bloqueio do navegador), mudo apenas como último recurso para o vídeo não ficar parado
+            v.muted = true;
+            v.play().then(() => setIsPlaying(true));
+          });
         });
       } else {
         v.src = video.videoUrl;
-        if (autoPlay) v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+        if (autoPlay) v.play().then(() => {
+          setIsPlaying(true);
+          setIsMuted(false);
+        }).catch(() => {
+          v.muted = true;
+          v.play().then(() => setIsPlaying(true));
+        });
       }
     };
 
