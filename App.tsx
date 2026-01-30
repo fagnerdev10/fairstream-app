@@ -138,34 +138,23 @@ const Layout: React.FC = () => {
     };
   }, []);
 
-  // V47 GLOBAL AUDIO SENTRY
+  // V48 GLOBAL AUDIO SYNC (STEALTH)
   useEffect(() => {
-    let globalCtx: AudioContext | null = null;
-
     const ensureAudioPower = async () => {
-      if (!globalCtx) {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioCtx) globalCtx = new AudioCtx();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') await ctx.resume();
       }
-
-      if (globalCtx && globalCtx.state === 'suspended') {
-        await globalCtx.resume();
-      }
-
-      // Silent pulse to keep hardware awake
-      const b = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-      b.play().catch(() => { });
-
-      (window as any).AUDIO_AUTORIZED_V47 = true;
       window.dispatchEvent(new Event('POWER_AUDIO_ON'));
     };
 
-    ['click', 'touchstart', 'mousedown'].forEach(e =>
+    ['click', 'touchstart'].forEach(e =>
       window.addEventListener(e, ensureAudioPower, { capture: true, passive: true })
     );
 
     return () => {
-      ['click', 'touchstart', 'mousedown'].forEach(e =>
+      ['click', 'touchstart'].forEach(e =>
         window.removeEventListener(e, ensureAudioPower)
       );
     };
