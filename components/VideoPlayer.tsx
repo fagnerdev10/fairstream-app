@@ -97,9 +97,13 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
     start();
 
-    // Sincronização Global V47
-    const sync = () => { if (v.muted && !v.paused) hardUnmute(); };
+    // Sincronização Global V48 (Invisível)
+    const sync = () => {
+      if (v.muted && !v.paused) silentUnmute();
+    };
     window.addEventListener('POWER_AUDIO_ON', sync);
+    window.addEventListener('touchstart', sync, { passive: true });
+    window.addEventListener('click', sync, { passive: true });
 
     const updatePlaying = () => setIsPlaying(!v.paused);
     const updateTime = () => setCurrentTime(v.currentTime);
@@ -115,6 +119,8 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
     return () => {
       window.removeEventListener('POWER_AUDIO_ON', sync);
+      window.removeEventListener('touchstart', sync);
+      window.removeEventListener('click', sync);
       v.removeEventListener('play', updatePlaying);
       v.removeEventListener('pause', updatePlaying);
       v.removeEventListener('timeupdate', updateTime);
@@ -127,11 +133,16 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const toggle = () => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.muted && !v.paused && soundBlocked) {
-      hardUnmute();
+
+    if (v.paused) {
+      v.muted = false;
+      v.volume = 1.0;
+      v.play().catch(() => {
+        v.muted = true;
+        v.play();
+      });
     } else {
-      if (v.paused) v.play().catch(hardUnmute);
-      else v.pause();
+      v.pause();
     }
   };
 
@@ -163,19 +174,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         playsInline
       />
 
-      {/* V47 OVERLAY PIXEL-PERFECT (Z-INDEX 20000) */}
-      {soundBlocked && isPlaying && (
-        <div
-          onClick={(e) => { e.stopPropagation(); hardUnmute(); }}
-          className="absolute inset-0 z-[20000] bg-black/40 flex flex-col items-center justify-center cursor-pointer p-6"
-        >
-          <div className="bg-white text-black px-10 py-5 rounded-full font-black text-2xl flex items-center gap-4 shadow-2xl transform active:scale-90 transition-all">
-            <Volume2 size={36} />
-            CLIQUE PARA OUVIR
-          </div>
-          <p className="mt-4 text-white font-bold opacity-60 uppercase tracking-tighter text-xs">O som está bloqueado pelo seu dispositivo</p>
-        </div>
-      )}
+      {/* V48: REMOVIDO BOTÃO CENTRAL (A PEDIDO DO USUÁRIO) */}
 
       {/* CONTROLES */}
       <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/40 to-transparent p-4 md:p-6 transition-all duration-300 z-50 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
