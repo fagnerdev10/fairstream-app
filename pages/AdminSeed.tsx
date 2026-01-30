@@ -121,7 +121,7 @@ const AdminSeed: React.FC = () => {
       setRecentSyncs(prev => [{
         id: newVideoId,
         title: customTitle,
-        status: 'success'
+        status: 'success' as const
       }, ...prev].slice(0, 5));
 
       alert('CANAL CRIADO! 🎉\n\nEste canal agora é visível em QUALQUER dispositivo (celular, aba anônima, etc) através dos metadados globais na descrição.');
@@ -134,7 +134,7 @@ const AdminSeed: React.FC = () => {
       setRecentSyncs(prev => [{
         id: 'error-' + Date.now(),
         title: customTitle || 'Tentativa Falhou',
-        status: 'error',
+        status: 'error' as const,
         error: error.message
       }, ...prev].slice(0, 5));
       alert(`ERRO DE SINCRONIZAÇÃO: ${error.message}`);
@@ -241,11 +241,6 @@ const AdminSeed: React.FC = () => {
             </div>
           </div>
         </section>
-
-        <div className="bg-red-600 text-white p-6 rounded-3xl text-center font-black uppercase tracking-tighter text-4xl mb-8 animate-pulse shadow-[0_0_50px_rgba(220,38,38,0.5)] border-4 border-white">
-          FAGNER, O CÓDIGO LOCAL ESTÁ MUDANDO! (V21)
-          <p className="text-xs mt-2 opacity-80 italic">Verifique os arquivos em Downloads\Colei COPY 23</p>
-        </div>
 
         {/* PAINEL DE MONITORAMENTO V13 */}
         {recentSyncs.length > 0 && (

@@ -1,8 +1,12 @@
+// 🚀 FAIRSTREAM SMART AD SERVICE - VERSION V38 (ULTIMATE FIX)
+// BUILD-ID: 20240228_2105_NO_RPC
 
 import { Campaign, AdLocation, PlatformCampaign, AdvertiserProfile } from '../types';
 import { platformCampaignService } from './platformCampaignService';
 import { adService } from './adService';
 import { supabase } from './supabaseClient';
+
+console.log("%c [V38] SMART AD SERVICE LOADED. ZERO RPC MODE. ", "background: #70f; color: #fff; font-weight: bold; border: 2px solid white;");
 
 const SMART_QUEUE_KEY = 'fairstream_smart_queue_v3';
 
@@ -19,10 +23,6 @@ const setSessionCounter = (key: string, val: number) => {
     sessionStorage.setItem(`fairstream_ad_counter_${key}`, val.toString());
   } catch { }
 };
-
-interface QueueState {
-  lastServedIndex: number;
-}
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   'geral': ['vlog', 'entretenimento', 'curiosidade', 'diversos', 'variedades', 'geral', 'all'],
@@ -48,36 +48,20 @@ export const smartAdService = {
     if (!videoTags || videoTags.length === 0) return true;
 
     const normVideoTags = videoTags.map(smartAdService.normalize);
-    console.log(`[SmartAd] Checking relevance. Campaign Cats: [${campaignCategories.join(', ')}]. Video Tags: [${videoTags.join(', ')}]`);
 
     const isMatch = campaignCategories.some(catRaw => {
       const cat = smartAdService.normalize(catRaw || "");
-
-      // ✅ "Geral" ou "All" sempre combinam
       if (cat === 'geral' || cat === 'all' || cat === 'todos') return true;
 
-      // Match direto tag <-> categoria
-      if (normVideoTags.some(tag => tag.includes(cat) || cat.includes(tag))) {
-        console.log(`[SmartAd] ✅ Match direto encontrado: Video Tag matches Campaign Category "${cat}"`);
-        return true;
-      }
+      if (normVideoTags.some(tag => tag.includes(cat) || cat.includes(tag))) return true;
 
       const keywords = CATEGORY_KEYWORDS[catRaw.toLowerCase()] || [];
-      const keywordMatch = keywords.some(keyword => {
+      return keywords.some(keyword => {
         const normKey = smartAdService.normalize(keyword);
         return normVideoTags.some(tag => tag.includes(normKey));
       });
-
-      if (keywordMatch) {
-        console.log(`[SmartAd] ✅ Match por keyword encontrado para categoria: ${catRaw}`);
-        return true;
-      }
-      return false;
     });
 
-    if (!isMatch) {
-      console.log(`[SmartAd] ⚠️ Sem match de tags. Tags vídeo: [${videoTags.join(', ')}] | Categorias Campanha: [${campaignCategories.join(', ')}]`);
-    }
     return isMatch;
   },
 
@@ -95,33 +79,22 @@ export const smartAdService = {
         return true;
       });
 
-      // Se for vídeo, prioriza anúncios que batem com as tags. 
-      // Se encontrar anúncios específicos pras tags, usa APENAS eles.
-      // Se não encontrar nenhum específico, usa o fallback (anúncios sem cat ou todos os ativos).
       if (location === 'video' && paidCandidates.length > 0) {
         const strictMatches = paidCandidates.filter(c => {
-          if (!c.targetCategories || c.targetCategories.length === 0) return false; // Não é match estrito
+          if (!c.targetCategories || c.targetCategories.length === 0) return false;
           return smartAdService.checkRelevance(c.targetCategories, contextTags);
         });
 
         if (strictMatches.length > 0) {
-          console.log(`[SmartAd] 🎯 Prioridade máxima: Usando ${strictMatches.length} anúncios que batem com as tags.`);
           paidCandidates = strictMatches;
         } else {
-          // Fallback: Tenta anúncios "Gerais" (sem categorias) ou mantém a lista original se preferir que nada suma
           const generalAds = paidCandidates.filter(c => !c.targetCategories || c.targetCategories.length === 0);
           if (generalAds.length > 0) {
-            console.log(`[SmartAd] ℹ️ Sem match específico. Usando ${generalAds.length} anúncios generais.`);
             paidCandidates = generalAds;
-          } else {
-            console.log(`[SmartAd] ⚡ Sem match e sem anúncios generais. Usando fallback total.`);
           }
         }
       }
 
-      console.log(`[SmartAd] Paid candidates final: ${paidCandidates.length}`);
-
-      // 2. BUSCA CAMPANHAS DA PLATAFORMA E FILTRA POR LOCATION CORRETO
       const platformCampaigns = await adService.getPlatformCampaigns();
       const activePlatformCampaigns = platformCampaigns
         .filter(pc => {
@@ -131,8 +104,6 @@ export const smartAdService = {
         })
         .map(pc => ({
           advertiserId: 'platform',
-          // SÓ É IMAGEM SE TIVER URL QUE COMEÇA COM HTTP. 
-          // Se for base64 ou vazio, É TEXTO.
           type: (pc.imageUrl && pc.imageUrl.startsWith('http')) ? 'image' : 'text',
           location: pc.location || location,
           title: pc.title,
@@ -145,8 +116,6 @@ export const smartAdService = {
         } as any as Campaign));
 
       const candidates = [...paidCandidates, ...activePlatformCampaigns].map(c => {
-        // VALIDACAO DE SEGURANCA: Se o anuncio diz ser imagem mas nao tem URL valida, force ser texto.
-        // Isso evita o "buraco escuro" na tela se o banco tiver dados zoados.
         const hasValidImage = c.bannerImage && c.bannerImage.startsWith('http') && c.bannerImage.length > 10;
         if (c.type === 'image' && !hasValidImage) {
           return { ...c, type: 'text' as const };
@@ -154,15 +123,12 @@ export const smartAdService = {
         return c;
       });
 
-      console.log(`[SmartAd] Total candidates for ${location}: ${candidates.length} (${paidCandidates.length} paid, ${activePlatformCampaigns.length} platform)`);
-
       if (candidates.length === 0) return null;
 
       const sortedCandidates = [...candidates].sort((a, b) => a.id.localeCompare(b.id));
       const images = sortedCandidates.filter(c => c.type === 'image');
       const texts = sortedCandidates.filter(c => c.type === 'text');
 
-      // Usa o índice forçado ou o contador de sessão
       const callCounter = forceIndex !== undefined ? forceIndex : getSessionCounter(location);
       if (forceIndex === undefined) setSessionCounter(location, callCounter + 1);
 
@@ -181,7 +147,6 @@ export const smartAdService = {
         selected = all[callCounter % all.length];
       }
 
-      console.log(`[SmartAd] 🎯 Slot ${callCounter} | Tipo: ${selected.type.toUpperCase()} | Titulo: ${selected.title}`);
       return selected;
 
     } catch (error) {
@@ -191,16 +156,13 @@ export const smartAdService = {
   },
 
   trackSmartImpression: async (campaignId: string, videoId?: string, creatorId?: string) => {
-    await adService.trackImpression(campaignId);
+    try {
+      // 1. Rastreia na tabela de campanhas (Ads)
+      await adService.trackImpression(campaignId);
 
-    if (videoId) {
-      try {
-        const { error: rpcError } = await supabase.rpc('increment_video_ad_impressions', {
-          video_id_input: videoId,
-          creator_id_input: creatorId || null
-        });
-
-        if (rpcError) {
+      // 2. Incrementa contador no vídeo (UPDATE DIRETO - NO RPC)
+      if (videoId) {
+        try {
           const { data: currentVideo } = await supabase
             .from('videos')
             .select('ad_impressions, accumulated_revenue')
@@ -208,6 +170,7 @@ export const smartAdService = {
             .maybeSingle();
 
           if (currentVideo) {
+            console.log(`[V38] Contador antes: ${currentVideo.ad_impressions}`);
             await supabase
               .from('videos')
               .update({
@@ -215,26 +178,25 @@ export const smartAdService = {
                 accumulated_revenue: (Number(currentVideo.accumulated_revenue) || 0) + 0.20
               })
               .eq('id', videoId);
+
+            console.log(`[V38] ✅ Vídeo ${videoId} atualizado com sucesso via UPDATE.`);
           }
+        } catch (e) {
+          console.warn("[V38] Erro no update do vídeo:", e);
         }
 
         window.dispatchEvent(new Event("video-update"));
         window.dispatchEvent(new Event("payout-processed"));
         window.dispatchEvent(new Event("balance-updated"));
-
-      } catch (e) {
-        console.error("[SmartAd] Erro fatal ao rastrear impressão:", e);
       }
+    } catch (e) {
+      console.error("[V38] Erro fatal:", e);
     }
   },
 
   getHomeAd: async (contextTags: string[], index?: number): Promise<Campaign | null> => {
     try {
-      const ad = await smartAdService.getNextTargetedAd('home', contextTags, index);
-      return ad;
-    } catch (error) {
-      console.error('[SmartAd] Erro ao buscar anúncio para home:', error);
-      return null;
-    }
+      return await smartAdService.getNextTargetedAd('home', contextTags, index);
+    } catch (error) { return null; }
   }
 };

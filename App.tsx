@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Header from './components/Header';
@@ -12,7 +11,7 @@ import AdminSeed from './pages/AdminSeed';
 import FinancePrices from './pages/FinancePrices';
 import FinanceAdvertisers from './pages/FinanceAdvertisers';
 import FinanceSettings from './pages/FinanceSettings';
-import AdminCreatorStatus from './pages/AdminCreatorStatus'; // Novo Import
+import AdminCreatorStatus from './pages/AdminCreatorStatus';
 import AdvertiserDashboard from './pages/AdvertiserDashboard';
 import Auth from './pages/Auth';
 import Verification from './pages/Verification';
@@ -27,13 +26,13 @@ import ChannelPage from './pages/ChannelPage';
 import ViewerPanel from './components/ViewerPanel';
 import CreatorInbox from './pages/CreatorInbox';
 import CreatorLive from './pages/CreatorLive';
-import CreatorPayments from './pages/CreatorPayments'; // Novo Import
+import CreatorPayments from './pages/CreatorPayments';
 import CreatorFinancial from './pages/CreatorFinancial';
-import MercadoPagoCallback from './pages/MercadoPagoCallback'; // Novo Import - Painel Financeiro
+import MercadoPagoCallback from './pages/MercadoPagoCallback';
 import HowToLive from './pages/HowToLive';
-import Monetization from './pages/Monetization'; // Import da nova página
-import AdminPlatformCampaigns from './pages/AdminPlatformCampaigns'; // ✅ Campanhas da Plataforma
-import AdminFiscal from './pages/AdminFiscal'; // ✅ Painel Fiscal
+import Monetization from './pages/Monetization';
+import AdminPlatformCampaigns from './pages/AdminPlatformCampaigns';
+import AdminFiscal from './pages/AdminFiscal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { authService } from './services/authService';
@@ -44,6 +43,7 @@ import { monthlyPayoutService } from './services/monthlyPayoutService';
 import { AlertTriangle, Lock, Info, CheckCircle } from 'lucide-react';
 import { BroadcastMessage } from './types';
 
+// BROADCAST BANNER COMPONENT
 const BroadcastBanner: React.FC = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<BroadcastMessage[]>([]);
@@ -71,11 +71,11 @@ const BroadcastBanner: React.FC = () => {
   const getStyle = (style: string) => {
     if (theme === 'dark') {
       switch (style) {
-        case 'warning': return 'bg-yellow-500/10 text-yellow-500 border-b border-yellow-500/20 shadow-[0_0_15px_-5px_rgba(234,179,8,0.2)]';
-        case 'alert': return 'bg-red-500/10 text-red-500 border-b border-red-500/20 shadow-[0_0_15px_-5px_rgba(239,68,68,0.2)]';
-        case 'success': return 'bg-emerald-500/10 text-emerald-500 border-b border-emerald-500/20 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]';
+        case 'warning': return 'bg-yellow-500/10 text-yellow-500 border-b border-yellow-500/20';
+        case 'alert': return 'bg-red-500/10 text-red-500 border-b border-red-500/20';
+        case 'success': return 'bg-emerald-500/10 text-emerald-500 border-b border-emerald-500/20';
         case 'info':
-        default: return 'bg-blue-500/10 text-blue-400 border-b border-blue-500/20 shadow-[0_0_15px_-5px_rgba(59,130,246,0.2)]';
+        default: return 'bg-blue-500/10 text-blue-400 border-b border-blue-500/20';
       }
     } else {
       switch (style) {
@@ -102,7 +102,7 @@ const BroadcastBanner: React.FC = () => {
       {messages.map(msg => (
         <div
           key={msg.id}
-          className={`w-full px-4 py-2.5 flex items-center justify-center gap-3 text-sm font-medium text-center backdrop-blur-md transition-all duration-300 ${getStyle(msg.style)}`}
+          className={`w-full px-4 py-2.5 flex items-center justify-center gap-3 text-sm font-medium text-center backdrop-blur-md ${getStyle(msg.style)}`}
         >
           <div className="shrink-0 animate-pulse">{getIcon(msg.style)}</div>
           <span className="max-w-4xl truncate md:whitespace-normal">{msg.content}</span>
@@ -125,17 +125,10 @@ const Layout: React.FC = () => {
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   useEffect(() => {
-    const handleCompactUpdate = () => {
-      setIsCompact(userPreferences.getCompactModePreference());
-    };
+    const handleCompactUpdate = () => setIsCompact(userPreferences.getCompactModePreference());
+    const handleFocusUpdate = () => setIsFocusMode(localStorage.getItem('fairstream_focus_mode') === 'true');
 
-    const handleFocusUpdate = () => {
-      setIsFocusMode(localStorage.getItem('fairstream_focus_mode') === 'true');
-    };
-
-    // Inicializa
     handleFocusUpdate();
-
     window.addEventListener('compact-mode-update', handleCompactUpdate);
     window.addEventListener('focus-mode-update', handleFocusUpdate);
 
@@ -145,32 +138,53 @@ const Layout: React.FC = () => {
     };
   }, []);
 
+  // V47 GLOBAL AUDIO SENTRY
+  useEffect(() => {
+    let globalCtx: AudioContext | null = null;
+
+    const ensureAudioPower = async () => {
+      if (!globalCtx) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) globalCtx = new AudioCtx();
+      }
+
+      if (globalCtx && globalCtx.state === 'suspended') {
+        await globalCtx.resume();
+      }
+
+      // Silent pulse to keep hardware awake
+      const b = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+      b.play().catch(() => { });
+
+      (window as any).AUDIO_AUTORIZED_V47 = true;
+      window.dispatchEvent(new Event('POWER_AUDIO_ON'));
+    };
+
+    ['click', 'touchstart', 'mousedown'].forEach(e =>
+      window.addEventListener(e, ensureAudioPower, { capture: true, passive: true })
+    );
+
+    return () => {
+      ['click', 'touchstart', 'mousedown'].forEach(e =>
+        window.removeEventListener(e, ensureAudioPower)
+      );
+    };
+  }, []);
+
   if (!isLoading && isMaintenance && user?.role !== 'owner' && user?.email !== 'admin@fairstream.com') {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-center transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-100 text-gray-900'}`}>
+      <div className={`min-h-screen flex flex-col items-center justify-center p-8 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-100 text-gray-900'}`}>
         <div className={`border p-8 rounded-2xl max-w-md shadow-2xl ${theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
-          <div className="w-16 h-16 bg-yellow-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="text-yellow-500" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Em Manutenção</h1>
-          <p className={`${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'} mb-6`}>
-            A plataforma FairStream está passando por melhorias técnicas.
-            Voltaremos em breve.
-          </p>
-          <div className="text-xs text-zinc-600">
-            Acesso restrito à administração.
-          </div>
+          <div className="w-16 h-16 bg-yellow-600/20 rounded-full flex items-center justify-center mx-auto mb-6"><Lock className="text-yellow-500" size={32} /></div>
+          <h1 className="text-2xl font-bold mb-4 text-center">Manutenção</h1>
+          <p className="text-center text-zinc-500 mb-6">Estamos ajustando alguns detalhes importantes. Voltamos em breve!</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="bg-red-600 text-white text-[10px] font-bold text-center py-0.5 sticky top-0 z-[9999] uppercase tracking-tighter">
-        D6245F8D - PROVA VISUAL V21 - ARQUIVOS LOCAIS SENDO ALTERADOS - {new Date().toLocaleDateString()}
-      </div>
-      {/* Oculta Header no mobile se for página de vídeo */}
+    <div className={`min-h-screen transition-colors ${theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className={`${isWatchPage ? 'hidden md:block' : 'block'}`}>
         {!isFocusMode && <Header />}
       </div>
@@ -192,8 +206,6 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/verify" element={<Verification />} />
-
-        {/* Rota especial de callback OAuth sem sidebar/header padrão se preferir, mas aqui usamos Layout */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/trending" element={<Trending />} />
@@ -202,21 +214,16 @@ const AppRoutes: React.FC = () => {
           <Route path="/channel/:id" element={<ChannelPage />} />
           <Route path="/rules" element={<CommunityRules />} />
           <Route path="/upload" element={<Upload />} />
-
-          <Route path="/monetization" element={<Monetization />} /> {/* Nova Rota */}
-
+          <Route path="/monetization" element={<Monetization />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/payments" element={<CreatorPayments />} />
           <Route path="/dashboard/payments/callback" element={<MercadoPagoCallback />} />
           <Route path="/dashboard/financial" element={<CreatorFinancial />} />
-
           <Route path="/creator/inbox" element={<CreatorInbox />} />
           <Route path="/creator/live" element={<CreatorLive />} />
           <Route path="/creator/live-guide" element={<HowToLive />} />
           <Route path="/viewer-panel" element={<ViewerPanel />} />
           <Route path="/mp/callback" element={<MercadoPagoCallback />} />
-
-          {/* Rotas Administrativas */}
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/seed-profiles" element={<AdminSeed />} />
           <Route path="/admin/financeiro/precos" element={<FinancePrices />} />
@@ -224,8 +231,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/admin/financeiro/configuracoes" element={<FinanceSettings />} />
           <Route path="/admin/financeiro/status-criadores" element={<AdminCreatorStatus />} />
           <Route path="/admin/platform-campaigns" element={<AdminPlatformCampaigns />} />
-          <Route path="/admin/fiscal" element={<AdminFiscal />} /> {/* ✅ Painel Fiscal */}
-
+          <Route path="/admin/fiscal" element={<AdminFiscal />} />
           <Route path="/ads" element={<AdvertiserDashboard />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/blocked-channels" element={<BlockedChannels />} />
@@ -242,9 +248,6 @@ const App: React.FC = () => {
   useEffect(() => {
     seedService.injectSeedContent();
     seedService.checkAndRemoveSeedContent();
-
-    // ✅ PAGAMENTO AUTOMÁTICO NO DIA 5 DE CADA MÊS
-    // Verifica a cada hora se é dia 5 e processa os pagamentos
     monthlyPayoutService.scheduleAutomaticPayout();
   }, []);
 
