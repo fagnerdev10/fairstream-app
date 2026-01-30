@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings } from 'lucide-react';
 import { Video } from '../types';
 import Hls from 'hls.js';
 import { imageService } from '../services/imageService';
@@ -207,16 +207,23 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             >
               {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
-            <span className="text-white/40 font-mono text-xs">
-              {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}
+            <span className="text-white/40 font-mono text-xs flex items-center gap-1">
+              <span>{Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}</span>
+              <span>/</span>
+              <span>{Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, '0')}</span>
             </span>
           </div>
-          <button
-            onClick={() => { if (!document.fullscreenElement) containerRef.current?.requestFullscreen(); else document.exitFullscreen(); }}
-            className="text-white hover:text-blue-400"
-          >
-            {isFullscreen ? <Minimize size={28} /> : <Maximize size={28} />}
-          </button>
+          <div className="flex items-center gap-6">
+            <button className="text-white hover:text-blue-400 transition-colors">
+              <Settings size={24} />
+            </button>
+            <button
+              onClick={() => { if (!document.fullscreenElement) containerRef.current?.requestFullscreen(); else document.exitFullscreen(); }}
+              className="text-white hover:text-blue-400 transition-colors"
+            >
+              {isFullscreen ? <Minimize size={28} /> : <Maximize size={28} />}
+            </button>
+          </div>
         </div>
       </div>
       {children}
