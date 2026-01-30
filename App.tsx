@@ -26,7 +26,7 @@ import ChannelPage from './pages/ChannelPage';
 import ViewerPanel from './components/ViewerPanel';
 import CreatorInbox from './pages/CreatorInbox';
 import CreatorLive from './pages/CreatorLive';
-import CreatorPayments from './pages/CreatorPayments';
+
 import CreatorFinancial from './pages/CreatorFinancial';
 
 import HowToLive from './pages/HowToLive';
