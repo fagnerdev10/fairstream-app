@@ -304,10 +304,8 @@ export const MOCK_CONVERSIONS: ConversionEvent[] = [];
 export const MOCK_TRANSACTIONS: Transaction[] = [];
 export const MOCK_ADMIN_SETTINGS: AdminFinancialSettings = {
   pixKey: 'contato@fairstream.com',
-  pixKeyType: 'email',
-  entityType: 'cpf',
   gatewayConnected: true,
-  gatewayProvider: 'mercadopago',
+  gatewayProvider: 'asaas',
   autoWithdraw: false
 };
 

@@ -59,17 +59,7 @@ export interface SocialLinks {
   website?: string;
 }
 
-// Interface para dados do Mercado Pago Connect
-export interface MercadoPagoData {
-  connected: boolean;
-  userId?: string | number; // MP User ID (collector_id)
-  accessToken?: string;
-  publicKey?: string; // Novo
-  refreshToken?: string;
-  expirationDate?: string;
-  connectedAt?: string; // Novo
-  email?: string; // Email da conta MP
-}
+
 
 export interface Balance {
   available: number;
@@ -113,8 +103,7 @@ export interface User {
   socialLinks?: SocialLinks;
   isSeed?: boolean; // Flag para identificar conteúdo gerado automaticamente
 
-  // Integração Mercado Pago
-  mercadoPago?: MercadoPagoData;
+
   cpf?: string; // Novo campo para repasse mensal
   payoutEmail?: string; // Campo opcional para contato de repasse
   payoutHolderName?: string; // Nome do titular da conta para repasse
@@ -390,7 +379,7 @@ export interface AdminFinancialSettings {
   pixKeyType: 'cpf' | 'email' | 'phone' | 'random';
   entityType: 'cpf' | 'cnpj';
   gatewayConnected: boolean;
-  gatewayProvider: 'mercadopago' | 'pagseguro' | 'stripe';
+  gatewayProvider: 'asaas' | 'stripe';
   autoWithdraw: boolean;
 }
 

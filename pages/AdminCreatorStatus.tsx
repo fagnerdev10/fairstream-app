@@ -85,14 +85,13 @@ const AdminCreatorStatus: React.FC = () => {
                                 <tr>
                                     <th className="p-4">Criador</th>
                                     <th className="p-4">Status</th>
-                                    <th className="p-4">E-mail</th>
-                                    <th className="p-4">ID do Usuário</th>
+                                    <th className="p-4">Wallet ID (Asaas)</th>
                                     <th className="p-4 text-right">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}>
                                 {filtered.map(creator => {
-                                    const isConnected = creator.mercadoPago?.connected;
+                                    const isConnected = !!creator.asaasWalletId;
                                     return (
                                         <tr key={creator.id} className={`${theme === 'dark' ? 'hover:bg-zinc-800/50' : 'hover:bg-gray-50'}`}>
                                             <td className="p-4 flex items-center gap-3">
@@ -105,19 +104,16 @@ const AdminCreatorStatus: React.FC = () => {
                                             <td className="p-4">
                                                 {isConnected ? (
                                                     <span className="flex items-center gap-1.5 text-green-500 font-bold bg-green-500/10 px-2 py-1 rounded w-fit text-xs border border-green-500/20">
-                                                        <CheckCircle size={14} /> Conectado
+                                                        <CheckCircle size={14} /> Carteira Ativa
                                                     </span>
                                                 ) : (
                                                     <span className="flex items-center gap-1.5 text-zinc-500 font-bold bg-zinc-500/10 px-2 py-1 rounded w-fit text-xs border border-zinc-500/20">
-                                                        <XCircle size={14} /> Pendente
+                                                        <XCircle size={14} /> Sem Carteira
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className={`p-4 ${textSecondary}`}>
-                                                {creator.mercadoPago?.email || '-'}
-                                            </td>
                                             <td className={`p-4 font-mono text-xs ${textSecondary}`}>
-                                                {creator.mercadoPago?.userId || '-'}
+                                                {creator.asaasWalletId || '-'}
                                             </td>
                                             <td className="p-4 text-right">
                                                 <button className="text-blue-500 hover:underline text-xs flex items-center justify-end gap-1">

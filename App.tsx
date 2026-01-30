@@ -28,7 +28,7 @@ import CreatorInbox from './pages/CreatorInbox';
 import CreatorLive from './pages/CreatorLive';
 import CreatorPayments from './pages/CreatorPayments';
 import CreatorFinancial from './pages/CreatorFinancial';
-import MercadoPagoCallback from './pages/MercadoPagoCallback';
+
 import HowToLive from './pages/HowToLive';
 import Monetization from './pages/Monetization';
 import AdminPlatformCampaigns from './pages/AdminPlatformCampaigns';
@@ -204,14 +204,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/upload" element={<Upload />} />
           <Route path="/monetization" element={<Monetization />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/payments" element={<CreatorPayments />} />
-          <Route path="/dashboard/payments/callback" element={<MercadoPagoCallback />} />
           <Route path="/dashboard/financial" element={<CreatorFinancial />} />
           <Route path="/creator/inbox" element={<CreatorInbox />} />
-          <Route path="/creator/live" element={<CreatorLive />} />
-          <Route path="/creator/live-guide" element={<HowToLive />} />
-          <Route path="/viewer-panel" element={<ViewerPanel />} />
-          <Route path="/mp/callback" element={<MercadoPagoCallback />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/seed-profiles" element={<AdminSeed />} />
           <Route path="/admin/financeiro/precos" element={<FinancePrices />} />
