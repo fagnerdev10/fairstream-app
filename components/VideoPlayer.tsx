@@ -5,10 +5,10 @@ import Hls from 'hls.js';
 import { imageService } from '../services/imageService';
 
 /**
- * ⚡ VIDEO PLAYER V47 - SYNCHRONOUS OVERRIDE
- * - PROTOCOLO DE INTERFACE DIRETA: Sem atrasos de estado React.
- * - HARDWARE SYNC: Desmuda diretamente no DOM no momento do clique.
- * - ZERO ERRORS: Se houver vídeo, haverá som.
+ * ⚡ VIDEO PLAYER V48 - STEALTH SYNC (FINAL)
+ * - REMOVIDO TODO BOTÃO DE "CLIQUE PARA OUVIR"
+ * - O vídeo inicia mudo (necessário para autoplay no Chrome/Safari)
+ * - Assim que o usuário toca em qualquer parte do site, o som ativa sozinho
  */
 
 export interface VideoPlayerRef {
@@ -38,45 +38,36 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Sempre começa mudo para garantir autoplay
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [soundBlocked, setSoundBlocked] = useState(false);
 
   const isYouTube = video.videoUrl && (video.videoUrl.includes('youtube.com/embed') || video.videoUrl.includes('youtu.be'));
 
-  // V47: FUNÇÃO DE FORÇA BRUTA (SÍNCRONA)
-  const hardUnmute = () => {
+  // V48 - Função de desmudo silencioso
+  const silentUnmute = () => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !v.muted) return;
 
-    // Ação imediata no DOM (Burla as travas do navegador)
     v.muted = false;
     v.volume = 1.0;
-
-    // Tenta tocar imediatamente
-    v.play().then(() => {
-      // Só atualiza o estado DEPOIS que o hardware aceitou
-      setIsPlaying(true);
-      setIsMuted(false);
-      setSoundBlocked(false);
-    }).catch(err => {
-      console.error("[V47] Falha no hardware play", err);
-    });
+    setIsMuted(false);
+    // Tenta play caso tenha pausado por erro de autoplay
+    v.play().catch(() => { });
   };
 
   useImperativeHandle(ref, () => ({
     seek: (time: number) => {
       if (videoRef.current && !isYouTube) videoRef.current.currentTime = time;
     },
-    playWithSound: hardUnmute
+    playWithSound: silentUnmute
   }));
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v || isYouTube) return;
 
-    v.muted = true; // Inicia mudo para autoplay universal
+    v.muted = true;
     v.volume = 1.0;
 
     const start = () => {
@@ -87,23 +78,24 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         hls.loadSource(video.videoUrl);
         hls.attachMedia(v);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (autoPlay) v.play().then(() => { setIsPlaying(true); setSoundBlocked(true); }).catch(() => setSoundBlocked(true));
+          if (autoPlay) v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
         });
       } else {
         v.src = video.videoUrl;
-        if (autoPlay) v.play().then(() => { setIsPlaying(true); setSoundBlocked(true); }).catch(() => setSoundBlocked(true));
+        if (autoPlay) v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       }
     };
 
     start();
 
-    // Sincronização Global V48 (Invisível)
-    const sync = () => {
+    // V48 GLOBAL SYNC - Escuta qualquer interação no site
+    const handleGlobalInteraction = () => {
       if (v.muted && !v.paused) silentUnmute();
     };
-    window.addEventListener('POWER_AUDIO_ON', sync);
-    window.addEventListener('touchstart', sync, { passive: true });
-    window.addEventListener('click', sync, { passive: true });
+
+    window.addEventListener('POWER_AUDIO_ON', handleGlobalInteraction);
+    window.addEventListener('touchstart', handleGlobalInteraction, { passive: true });
+    window.addEventListener('click', handleGlobalInteraction, { passive: true });
 
     const updatePlaying = () => setIsPlaying(!v.paused);
     const updateTime = () => setCurrentTime(v.currentTime);
@@ -118,9 +110,9 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     v.addEventListener('ended', () => onEnded && onEnded());
 
     return () => {
-      window.removeEventListener('POWER_AUDIO_ON', sync);
-      window.removeEventListener('touchstart', sync);
-      window.removeEventListener('click', sync);
+      window.removeEventListener('POWER_AUDIO_ON', handleGlobalInteraction);
+      window.removeEventListener('touchstart', handleGlobalInteraction);
+      window.removeEventListener('click', handleGlobalInteraction);
       v.removeEventListener('play', updatePlaying);
       v.removeEventListener('pause', updatePlaying);
       v.removeEventListener('timeupdate', updateTime);
@@ -135,8 +127,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     if (!v) return;
 
     if (v.paused) {
-      v.muted = false;
-      v.volume = 1.0;
+      v.muted = false; // Ao clicar manualmente, libera o som
       v.play().catch(() => {
         v.muted = true;
         v.play();
@@ -149,7 +140,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   if (isYouTube) {
     return (
       <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-        <iframe src={`${video.videoUrl}?autoplay=${autoPlay ? 1 : 0}&mute=0`} className="absolute inset-0 w-full h-full" allowFullScreen allow="autoplay" />
+        <iframe
+          src={`${video.videoUrl}?autoplay=${autoPlay ? 1 : 0}&mute=1`}
+          className="absolute inset-0 w-full h-full"
+          allowFullScreen
+          allow="autoplay"
+        />
         {children}
       </div>
     );
@@ -174,7 +170,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         playsInline
       />
 
-      {/* V48: REMOVIDO BOTÃO CENTRAL (A PEDIDO DO USUÁRIO) */}
+      {/* V48: SEM OVERLAYS OU BOTÕES NO MEIO DO VÍDEO */}
 
       {/* CONTROLES */}
       <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/40 to-transparent p-4 md:p-6 transition-all duration-300 z-50 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
@@ -191,12 +187,20 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             <button onClick={toggle} className="text-white hover:text-blue-400">
               {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
             </button>
-            <button onClick={() => { if (videoRef.current) videoRef.current.muted = !videoRef.current.muted; }} className="text-white">
+            <button
+              onClick={() => { if (videoRef.current) videoRef.current.muted = !videoRef.current.muted; }}
+              className="text-white hover:text-blue-400"
+            >
               {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
-            <span className="text-white/40 font-mono text-xs">{Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}</span>
+            <span className="text-white/40 font-mono text-xs">
+              {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}
+            </span>
           </div>
-          <button onClick={() => { if (!document.fullscreenElement) containerRef.current?.requestFullscreen(); else document.exitFullscreen(); }} className="text-white hover:text-blue-400">
+          <button
+            onClick={() => { if (!document.fullscreenElement) containerRef.current?.requestFullscreen(); else document.exitFullscreen(); }}
+            className="text-white hover:text-blue-400"
+          >
             {isFullscreen ? <Minimize size={28} /> : <Maximize size={28} />}
           </button>
         </div>
